@@ -6,7 +6,7 @@ owner: bagusyanuar
 updated: 2026-07-26 13:17:00
 references_prd: ../../../PRD/auth.md
 references_trd_be: ../../BE/auth/tech-spec.md
-references_design: -
+references_design: "-"
 ---
 
 # TRD Frontend: Auth Module

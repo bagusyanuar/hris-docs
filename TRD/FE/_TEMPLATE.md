@@ -6,7 +6,7 @@ owner: <Nama Arsitek/FE Lead>
 updated: <YYYY-MM-DD HH:MM:SS>
 references_prd: <Link ke file PRD>
 references_trd_be: <Link ke TRD BE - opsional>
-references_design: <Link Figma / UI Design (tulis "-" jika belum ada)>
+references_design: <Link Figma / UI Design (tulis "-" dengan tanda kutip jika belum ada)>
 ---
 
 # TRD Frontend: <Nama Modul>
