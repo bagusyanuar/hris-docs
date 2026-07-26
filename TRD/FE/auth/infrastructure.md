@@ -1,18 +1,22 @@
-# Infrastructure: Auth Module (Frontend)
+# Infrastructure & Tooling: Auth Frontend
 
-Dokumen ini menjelaskan integrasi dan perilaku infrastruktur lapisan klien yang terkait dengan fungsi otentikasi.
+Dokumen infrastruktur pendukung spesifik untuk pengembangan Frontend modul Auth.
 
-## 1. SvelteKit SSR (Server-Side Rendering) vs Browser
-- Proses penangkapan JWT Payload dilakukan secara *hybrid*.
-- Jika pengguna pertama kali membuka aplikasi, fitur SSR SvelteKit (via fungsi `load` di `+layout.server.ts` atau *hooks*) **belum bisa** membaca *access token* karena itu disimpan di memori klien.
-- SSR hanya bisa membaca *cookie* `refresh_token`. SvelteKit harus dikonfigurasikan agar mampu meminta rotasi token *di sisi server* untuk melakukan rehidrasi (*rehydration*) akses login sebelum halaman dirender.
+## 1. Konfigurasi Dependency Injection (Mocking)
 
-## 2. Interaksi HTTP Client (Axios / Fetch)
-- Komponen Svelte tidak pernah menyentuh fungsi `fetch` murni secara langsung.
-- Semua *request* jaringan FE dialirkan melalui `Axios Interceptor`.
-- **Interceptor Request:** Mengambil token dari memori `$state` dan menempelkannya ke `Authorization: Bearer ...` secara otomatis.
-- **Interceptor Response:** Jika API mengembalikan HTTP `401 Expired`, FE secara diam-diam (*silent*) akan menembak `/api/v1/auth/refresh` lalu mengulang kembali *request* awal yang terputus tersebut.
+Agar tim Frontend (Svelte) bisa berlari mengimplementasikan alur "Perpanjangan Sesi" tanpa menunggu API Backend, proyek menerapkan arsitektur *Dependency Injection* murni tanpa membebani *browser* dengan *Service Worker* pihak ketiga.
 
-## 3. Cookie Storage (Infrastruktur Browser)
-- Frontend **tidak diizinkan** melakukan injeksi `document.cookie`.
-- Frontend sepenuhnya bergantung pada mekanisme respons infrastruktur *Browser* modern (Chrome/Safari) yang akan menyimpan secara otomatis header `Set-Cookie` dari Backend, selama atribut CORS API di-*set* mengizinkan `credentials: include`.
+- **Domain-Level Flag:** Disediakan *flag* lokal `useMock` di dalam *Dependency Injection Container* (Context/Factory) khusus untuk modul Auth. Variabel global `.env` secara tegas tidak digunakan agar tidak berdampak ke modul/domain lain.
+- **Dependency Injection:** Jika *flag* lokal tersebut bernilai `true`, kelas `AuthMockRepository` akan disuntikkan ke dalam *Use Case* komponen. Jika `false`, akan menggunakan kelas API aslinya.
+- **Simulasi Interceptor (Rotasi Token) di Level Kode:**
+  - `AuthMockRepository` akan di-*hardcode* untuk sengaja me-*return* *Promise reject* `401 Unauthorized` pada simulasi panggil API pertama.
+  - Penolakan *Promise* ini akan ditangkap otomatis oleh fungsi *Interceptor*, yang kemudian men- *trigger* pemanggilan fungsi `refresh()` pada repositori yang sama.
+  - Seluruh alur kompleks ini beroperasi murni di JavaScript *runtime* tanpa satu pun *request* yang bocor ke *network tab*.
+
+## 2. CI/CD Static Adapter
+
+Karena *Decision Log* menetapkan aplikasi berjalan sebagai SPA murni tanpa *Node server* (`ssr=false`), maka proses kompilasi infrastruktur akan berjalan seperti ini:
+
+- **Build Command:** `vite build` akan membuahkan sebuah folder `build/` yang hanya berisi *File Statis* (`.html`, `.js`, `.css`, gambar).
+- **Deployment:** Folder statis tersebut disalin (misalnya via *GitHub Actions*) langsung ke penyimpanan statis infrastruktur seperti AWS S3 Bucket, Nginx Web Server, atau Cloudflare Pages.
+- **Konsekuensi Fallback:** Konfigurasi infrastruktur (misalnya Nginx) WAJIB mengarahkan seluruh rute 404 kembali ke `index.html` (SPAs fallback), agar SvelteKit Client Router bisa mengambil alih dan mengecek memori otorisasi pengguna (`+layout.ts`).

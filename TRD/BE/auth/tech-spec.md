@@ -3,7 +3,7 @@ module: Auth
 version: 1.0.0
 status: Draft
 owner: bagusyanuar
-updated: 2026-07-26 13:17:00
+updated: 2026-07-26 20:30:00
 references_prd: https://github.com/bagusyanuar/hris-docs/blob/main/PRD/auth.md
 ---
 
@@ -12,23 +12,27 @@ references_prd: https://github.com/bagusyanuar/hris-docs/blob/main/PRD/auth.md
 ## 1. Referensi PRD & Ruang Lingkup
 - **PRD:** [PRD/auth.md](../../../PRD/auth.md)
 - **Versi PRD:** v1.0.0
-- **Ringkasan:** Implementasi gerbang otentikasi (login) dan *refresh token rotation* yang akan melindungi seluruh ekosistem backend HRIS. Modul ini tidak mengelola entitas tabel mandiri, melainkan mengonsumsi entitas User.
+- **Penerjemahan Bisnis ke Teknis:** Sesuai arahan PRD untuk menciptakan *"Penciptaan sesi pengguna yang aman"* dan *"Perpanjangan masa aktif sesi otomatis"*, TRD ini memetakan alur bisnis tersebut menjadi arsitektur otentikasi berbasis **Stateless JWT** dengan pola *Refresh Token Rotation* menggunakan pengamanan **HttpOnly Secure Cookie**.
 
 ## 2. Kontrak API (Endpoints)
 
 | Method | Endpoint | Deskripsi |
 |--------|----------|-----------|
-| POST | `/api/v1/auth/login` | Endpoint untuk memvalidasi kredensial dan menerbitkan JWT *Token Pair*. |
-| POST | `/api/v1/auth/refresh` | Endpoint untuk memperbarui *access token* yang *expired* menggunakan *refresh token* dari *cookie*. |
+| POST | `/api/v1/auth/login` | Endpoint untuk memvalidasi kredensial (menggunakan algoritma `Bcrypt`) dan menerbitkan JWT *Token Pair*. (Menerjemahkan *PRD Skenario 1*). |
+| POST | `/api/v1/auth/refresh` | Endpoint untuk merotasi *access token* dan *refresh token*. (Menerjemahkan *PRD Skenario 4: Perpanjangan Sesi Otomatis*). |
 
 ### 2.1 Endpoint Detail: `POST /api/v1/auth/login`
 - **Request Payload:**
   ```json
   {
     "email": "user@company.com",
-    "password": "mySecurePassword123"
+    "password": "mySecurePassword123!"
   }
   ```
+- **Request Payload Validation & Error Messages (422 Unprocessable Entity):**
+  *(Menerjemahkan aturan ketat dari PRD Skenario 6)*
+  - `email`: `required`, `email` format. -> *(Pesan error mutlak: "Format email tidak valid")*
+  - `password`: `required`, `min:8`, wajib 1 huruf kapital, 1 angka, 1 karakter khusus. -> *(Pesan error mutlak: "Password minimal 8 karakter, wajib mengandung huruf kapital, angka, dan karakter spesial")*
 - **Response Payload (200 OK):**
   ```json
   {
@@ -41,38 +45,36 @@ references_prd: https://github.com/bagusyanuar/hris-docs/blob/main/PRD/auth.md
     }
   }
   ```
-  *(Catatan: `refresh_token` disertakan di header `Set-Cookie` secara otomatis).*
+  *(Catatan Teknis: Sesuai Non-Functional Requirements PRD, `refresh_token` tidak dikirim di payload JSON, melainkan diset via header jaringan `Set-Cookie`).*
 - **Error Codes:** 
-  - `400 Bad Request` (Invalid JSON)
-  - `422 Unprocessable Entity` (Validation failed)
-  - `401 Unauthorized` (Invalid credentials / Inactive account)
+  - `401 Unauthorized` (Pesan: *"Kredensial tidak valid"*) — untuk gagal kredensial.
+  - `401 Unauthorized` (Pesan: *"Akun tidak aktif"*) — jika `users.status != active` (Menerjemahkan *PRD Skenario 3*).
 
 ### 2.2 Endpoint Detail: `POST /api/v1/auth/refresh`
-- **Request Payload:** Kosong (token diambil dari `Cookie: refresh_token=...`).
-- **Response Payload (200 OK):** Sama persis dengan respons login di atas. *Cookie* baru juga akan di-*set* untuk me-rotasi *refresh token*.
-- **Error Codes:** `401 Unauthorized` (Refresh token missing or invalid)
+- **Request Payload:** Kosong. Backend membaca `refresh_token` dari *Cookie* secara otomatis.
+- **Response Payload (200 OK):** Menerbitkan `access_token` baru di JSON, dan menimpa *Cookie* yang lama dengan `refresh_token` yang baru (Mekanisme Rotasi/Perpanjangan Sesi).
 
 ## 3. Desain Arsitektur DDD
 
+Modul ini diimplementasikan menggunakan tumpukan teknologi **Golang DDD**:
+
 ### 3.1 Domain Layer
-- **Entity/Abstraksi:** `TokenPair` (struct penyimpan Access & Refresh Token), `TokenClaims` (payload token).
-- **Abstraksi (Interface):** `TokenGenerator` — Kontrak untuk men-*generate* JWT tanpa terikat implementasi fisik.
+- **Entitas:** Modul ini beroperasi murni sebagai pemroses (tidak ada tabel Auth mandiri).
+- **Abstraksi (Interface):** `TokenGenerator` (Kontrak penciptaan bukti digital/JWT).
 
 ### 3.2 Application Layer
-- **Use Cases / Service:**
-  - `Login(ctx, email, password)`: Melakukan validasi *password* (Bcrypt) via `user.Repository`, **memverifikasi status pengguna (active)**, lalu memanggil `TokenGenerator`.
-  - `Refresh(ctx, refreshToken)`: Memvalidasi *refresh token*, mengekstrak klaim, lalu men-*generate* token *pair* baru.
+- **Use Cases:**
+  - `LoginUseCase(email, password)`: Memanggil `user.Repository` untuk mencari profil berdasarkan email. Melakukan *hashing* komparasi via pustaka kriptografi **Bcrypt**. Mengecek secara tegas apakah `status == active` (menerjemahkan gerbang masuk *PRD Skenario 3*). Memanggil `TokenGenerator`.
+  - `RefreshUseCase(cookieToken)`: Memvalidasi *refresh token*, mengekstrak entitas identitas, lalu menerbitkan siklus token baru.
 
 ### 3.3 Adapter Layer
-- **Token Adapter:** `jwt.go` (Implementasi dari interface `TokenGenerator` menggunakan HMAC `HS256`).
-- **Handlers:** `handler.go` untuk *parsing* HTTP request dari Gofiber dan menyusun Cookie *HttpOnly*.
+- **Middleware:** `AuthMiddleware` — Menginspeksi header `Authorization: Bearer <token>`, memvalidasi *signature* rahasia JWT (`HS256`), dan menyuntikkan klaim identitas (`user_id`) ke dalam *request context* (Menerjemahkan amanat PRD: *"Pengecekan hak akses terpusat"*).
+- **Handlers:** Gofiber HTTP *handler* bertugas menyusun Cookie dengan atribut tingkat keamanan tertinggi (`HttpOnly=true`, `Secure=true`, `SameSite=Strict`).
 
-## 4. Referensi Skema Database (DBML)
-- **File DBML:** Tidak ada spesifik untuk Auth.
-- **Tabel Utama:** Modul ini berinteraksi langsung (baca-saja) ke tabel `users` (diambil melalui domain User). Pengecekan krusial ada di field `users.status`.
+## 4. Referensi Skema Database
+- Modul ini **hanya mengonsumsi (Read-Only)** data dari tabel `users` (dikelola oleh modul User).
+- *Constraint* yang dijaga ketat adalah `users.email` (bersifat unik) dan `users.password` (disimpan dalam bentuk *Hash Bcrypt*, menerjemahkan larangan *plain-text* di PRD).
 
-## 5. Keamanan & Multi-Tenant Scoping
-- **Token Delivery:**
-  - `access_token` dikirimkan secara terbuka (di memori sisi klien).
-  - `refresh_token` dikirimkan via *Cookie* dengan atribut `HttpOnly=true`, `Secure=true`, dan `SameSite=Strict`.
-- **Hiding Error Detail:** Kesalahan validasi *password* atau email tidak terdaftar akan dilempar secara seragam sebagai `401 Invalid credentials` untuk menghindari serangan *User Enumeration*.
+## 5. Security & Multi-Tenant Scoping
+- Sesuai dengan "Non-Functional Requirements" di PRD, sesi pengguna tidak disimpan di *database* fisik (Arsitektur Stateless JWT).
+- Bahaya pencurian sesi (pencurian data via celah XSS antarmuka) diatasi dengan merantai *refresh token* ke dalam ranah *HttpOnly Cookie* yang mustahil diakses oleh *script* JavaScript jahat dari klien.

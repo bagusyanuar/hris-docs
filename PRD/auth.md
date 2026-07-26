@@ -23,16 +23,16 @@ Menyediakan satu pintu masuk (*Single Point of Entry*) otentikasi untuk seluruh 
 ## 2. Scope & Out-of-Scope (Batasan Tegas)
 
 **In-Scope (Dikerjakan):**
-- Login menggunakan `email` + `password` (dicocokkan dengan hash `bcrypt` di tabel `users`).
-- Penerbitan token pasangan (*Token Pair*): `access_token` (umur pendek, dikirim via JSON response) dan `refresh_token` (umur panjang, diset via **HttpOnly Secure Cookie**).
-- Endpoint refresh token dengan pola **rotation** (tiap refresh berhasil, refresh token lama diganti baru).
-- Middleware `AuthProtected` untuk memvalidasi `access_token` (`Authorization: Bearer <token>`) pada endpoint yang butuh proteksi, dan menyisipkan `userID` + `role` ke context request.
-- Validasi status akun (`users.status`) — akun yang tidak `active` (misalnya `inactive`, `suspended`) **wajib** ditolak saat login, meskipun kredensial benar. Ini adalah kontrak yang dijanjikan ke modul Employee (offboarding memblokir akses login).
+- Hak akses (Login) menggunakan kombinasi `email` dan `password` yang dikelola secara aman oleh sistem.
+- Penciptaan sesi pengguna (*User Session*) setelah berhasil masuk.
+- Perpanjangan masa aktif sesi secara otomatis selama pengguna masih aktif menggunakan sistem.
+- Pengecekan hak akses terpusat (*Access Control*) untuk melindungi seluruh halaman dan data internal HRIS dari pengguna tanpa izin.
+- Validasi status akun — akun yang tidak berstatus aktif (misalnya *inactive*, *suspended*) **wajib** ditolak saat login, meskipun kredensial yang dimasukkan benar. (Ini adalah kontrak operasional yang menjamin mantan pegawai tidak bisa mengakses sistem setelah proses offboarding).
 
 **Out-of-Scope (TIDAK di modul ini):**
 - **Registrasi akun baru (Sign Up)** — pembuatan baris data di `users` adalah tanggung jawab proses onboarding Employee, bukan ranah Auth.
-- **RBAC granular / permission matrix** — token membawa klaim `role`, tapi otorisasi spesifik berbasis role (misal: "hanya HR Manager boleh akses endpoint X") belum diimplementasikan.
-- **Logout server-side / token revocation** — karena token bersifat *stateless JWT* tanpa token store/blacklist, tidak ada mekanisme pembatalan token sebelum masa berlakunya habis. Endpoint logout (jika ada) hanya menghapus cookie di sisi *client*.
+- **Otorisasi spesifik (RBAC/Permission Matrix)** — Hak akses khusus per fitur (misal: "hanya HR Manager boleh melihat gaji") belum ditangani di tahap ini, hanya identifikasi peran (*role*).
+- **Pembatalan Sesi Jarak Jauh (Remote Logout)** — Saat ini, sistem belum memiliki kemampuan untuk memutus sesi secara paksa dari server sebelum waktu sesi habis (kecuali lewat penghapusan data di perangkat pengguna).
 - **Reset password / lupa password** — belum ada alur email verifikasi.
 - **Account lockout / brute-force protection** — belum ada pembatasan batas percobaan login (Rate Limiting).
 - **Multi-Factor Authentication (MFA) & Social Login (SSO)**.
@@ -53,39 +53,42 @@ Modul Auth **tidak** mendefinisikan role bisnis sendiri — ia hanya bertindak s
 ## 4. Kriteria Penerimaan (Acceptance Criteria)
 
 **Skenario 1: Login Berhasil**
-- **Given** pengguna dengan akun `status = active` memasukkan email dan password yang benar.
-- **When** request `POST /api/v1/auth/login` dikirim.
-- **Then** sistem merespon `200 OK` berisi `access_token`, `expires_in`, `token_type`, dan menyisipkan `refresh_token` sebagai cookie `HttpOnly`, `Secure`, `SameSite=Strict`.
+- **Given** pengguna dengan akun berstatus aktif memasukkan kredensial (email dan password) yang benar.
+- **When** pengguna menekan tombol Masuk (Login).
+- **Then** sistem memberikan hak akses, menciptakan sesi aktif, dan mengarahkan pengguna ke halaman *Dashboard* utama.
 
 **Skenario 2: Login Gagal — Kredensial Salah**
-- **Given** email tidak terdaftar, atau email terdaftar tapi password salah.
-- **When** request login dikirim.
-- **Then** sistem merespon `401 Unauthorized` dengan pesan generik *"Invalid credentials"* (tidak membedakan pesan antara email salah atau password salah untuk mencegah *user enumeration*).
+- **Given** email tidak terdaftar, ATAU email terdaftar tetapi password salah.
+- **When** pengguna mencoba masuk.
+- **Then** sistem menolak akses dan menampilkan pesan umum *"Kredensial tidak valid"* (tidak memberi petunjuk spesifik apakah email atau sandi yang salah, demi keamanan).
 
 **Skenario 3: Login Ditolak — Akun Tidak Aktif**
-- **Given** akun dengan kredensial benar tapi `status != active` (mis. offboard).
-- **When** request login dikirim.
-- **Then** sistem menolak dengan `401 Unauthorized`, tanpa menerbitkan token.
-- *Catatan implementasi:* Pengecekan status saat ini masih menjadi *gap* di backend (`application/auth/service.go` belum mengecek `u.Status()`). **Ini harus segera ditutup** karena merupakan kontrak dengan PRD Employee.
+- **Given** akun pengguna sudah tidak aktif (misal: pegawai telah *offboard*), tetapi memasukkan kredensial yang benar.
+- **When** pengguna mencoba masuk.
+- **Then** sistem menolak akses, tidak memberikan sesi, dan menampilkan pesan penolakan.
+- *Catatan implementasi:* Pengecekan status saat ini masih menjadi *gap* di kode existing. Ini harus segera ditutup karena merupakan kontrak fungsional dengan modul Employee.
 
-**Skenario 4: Refresh Token Rotation**
-- **Given** client memiliki `refresh_token` valid di cookie.
-- **When** request `POST /api/v1/auth/refresh` dikirim.
-- **Then** sistem menerbitkan `access_token` baru dan `refresh_token` baru (merotasi/mengganti cookie lama).
+**Skenario 4: Perpanjangan Sesi Otomatis**
+- **Given** pengguna sedang menggunakan sistem dan memiliki sesi latar belakang yang masih aktif.
+- **When** sesi utama hampir habis masa berlakunya.
+- **Then** sistem akan secara otomatis memperbarui sesi tersebut tanpa mengganggu aktivitas pengguna di layar.
 
-**Skenario 5: Perlindungan Endpoint (Middleware)**
-- **Given** request ke endpoint terproteksi dikirim tanpa token, ATAU dengan token yang kedaluwarsa/invalid.
-- **When** request tersebut menyentuh server.
-- **Then** sistem merespon `401 Unauthorized`, dan request tidak diteruskan ke *handler* bisnis.
+**Skenario 5: Perlindungan Halaman (Access Control)**
+- **Given** pengguna (atau pihak tak dikenal) mencoba mengakses halaman atau fitur internal HRIS tanpa memiliki sesi yang sah (belum login atau sesi telah habis).
+- **When** sistem menerima permintaan akses tersebut.
+- **Then** sistem langsung memblokir akses dan mengarahkan paksa pengguna kembali ke halaman Login.
 
+**Skenario 6: Login Ditolak — Validasi Format Input Gagal**
+- **Given** pengguna mencoba masuk.
+- **When** format email tidak sesuai standar ATAU password tidak memenuhi kebijakan minimum keamanan (minimal 8 karakter, mengandung 1 huruf kapital, 1 angka, dan 1 karakter spesial).
+- **Then** sistem menolak akses dan langsung menampilkan pesan peringatan spesifik kepada pengguna mengenai kesalahan format tersebut (sebelum mencocokkan data lebih jauh).
 ---
 
-## 5. Technical & Architectural Constraints
+## 5. Non-Functional Requirements (Keamanan & Performa)
 
-- **Domain-Driven Design:** Domain Layer Auth hanya menangani abstraksi token (`TokenGenerator`, `TokenPair`). Verifikasi user dilakukan di Application Layer dengan memanggil `user.Repository` (jangan mem-bypass kueri langsung ke DB).
-- **Hybrid Token Storage (Frontend Constraint):** `access_token` dikirim via JSON body (FE menyimpannya di *memory*, BUKAN *localStorage* untuk cegah XSS), sedangkan `refresh_token` **wajib** dikirim sebagai HttpOnly Secure Cookie.
-- **Stateless JWT:** Token ditandatangani menggunakan rahasia `HS256`. Tidak ada token store di database.
-- **Keamanan Hashing:** Kata sandi wajib dibandingkan menggunakan fungsi *Bcrypt* (`bcrypt.CompareHashAndPassword`).
+- **Keamanan Sandi:** Kata sandi pengguna tidak boleh disimpan dalam bentuk teks biasa (*plain-text*) di dalam penyimpanan data manapun. Sistem harus menggunakan algoritma perlindungan searah yang kuat.
+- **Manajemen Sesi:** Mekanisme penyimpanan sesi di perangkat pengguna harus kebal dari pencurian data lewat celah keamanan antarmuka (misal: *Cross-Site Scripting* / XSS).
+- **Arsitektur Tanpa Jejak (Stateless):** Sistem tidak memerlukan tempat penyimpanan sesi terpusat di *database*, melainkan menggunakan bukti digital yang dapat diverifikasi secara independen oleh sistem.
 
 ---
 
@@ -100,29 +103,19 @@ Modul Auth **tidak** mendefinisikan role bisnis sendiri — ia hanya bertindak s
 
 ---
 
-## 7. Data Schema & Business Rules (Database Map)
+## 7. Data Schema & Business Rules
 
-Auth **tidak memiliki tabel fisik sendiri** — modul ini merupakan konsumen mutlak dari tabel `users` (milik Modul User) dan berperan sebagai penerbit JWT stateless yang tidak disimpan ke *database*.
+Auth **tidak memiliki tabel entitas sendiri** — modul ini merupakan konsumen mutlak dari profil Pengguna (milik Modul User) dan hanya berperan sebagai penerbit akses masuk.
 
-### 7.1. `users` (Dikonsumsi dari Modul User)
-Berikut adalah properti entitas User yang diawasi ketat oleh proses otentikasi:
+### 7.1. Konsumsi Entitas Pengguna
+Berikut adalah data pengguna yang diperiksa secara ketat oleh sistem saat proses masuk:
 
 | Field | Aturan Bisnis |
 | :-- | :-- |
-| `id` | Dimasukkan sebagai Klaim `user_id` di dalam payload JWT. |
-| `email` | Bersifat **unique**. Menjadi kredensial utama saat proses *login*. |
-| `password` | Berbentuk hash `bcrypt`, wajib dicocokkan sebelum token diterbitkan. |
-| `status` | Gerbang masuk. Hanya pengguna berstatus `active` yang lolos verifikasi. |
-
-### 7.2. Struktur JWT Payload (Bukan Tabel Fisik)
-Data yang disisipkan ke dalam token (klaim):
-
-| Field | Tipe | Keterangan |
-| :-- | :-- | :-- |
-| `user_id` | string | ID unik dari tabel `users`. |
-| `role` | string | Saat ini *hardcoded* `"employee"`. |
-| `type` | string | Nilainya `"access"` atau `"refresh"` untuk mencegah penyalahgunaan tipe token. |
-| `exp` | timestamp | Masa kedaluwarsa token. |
+| `id` | Menjadi penanda identitas unik pengguna pada sesi yang diterbitkan. |
+| `email` | Bersifat **unik**. Wajib berformat *email* yang sah. *(Pesan error: "Format email tidak valid")*. Menjadi kredensial utama yang diinput pengguna. |
+| `password` | Dijaga kerahasiaannya. **Validasi Pembuatan Sandi:** Wajib minimal 8 karakter, mengandung minimal 1 huruf kapital, 1 angka, dan 1 karakter spesial. *(Pesan error: "Password minimal 8 karakter, wajib mengandung huruf kapital, angka, dan karakter spesial")*. |
+| `status` | Gerbang mutlak. Hanya pengguna berstatus `active` yang diizinkan untuk melewati verifikasi akses. |
 
 ---
 

@@ -7,6 +7,9 @@ description: Guide for scaffolding Product Requirements Documents (PRD) in the H
 
 When the user asks to create or brainstorm a requirement document, PRD, or specifications for a new module/feature, you MUST follow this format and convention.
 
+**CRITICAL RULE - NO TECHNICAL JARGON:**
+The PRD is written strictly for Product Managers, Business Analysts, and QA. Do NOT use technical jargon such as `JWT`, `Bcrypt`, `Middleware`, `HTTP status codes` (e.g., `200 OK`, `401 Unauthorized`), `JSON structures`, or internal database constraints. Describe behaviors purely in terms of Business Flows, User Actions, and Product Rules. All technical implementation details MUST be deferred to the TRD.
+
 ## 1. Directory & Naming Convention
 - **One file per module (bounded context).** DO NOT put multiple modules in a single monolithic file. Each module gets its own `.md`, mirroring the domain-first code layout.
 - **Location:** All PRD documents MUST be saved in the `PRD/` directory inside `hris-docs`.
@@ -71,7 +74,7 @@ Make coupling explicit and versioned. Two directions are MANDATORY:
 ## 3. Data Schema & Business Rules
 After the 6 core pillars, provide the logical breakdown of the data models (Entities):
 - **Header:** `## [Entity Name]`
-- **Aturan Bisnis:** Unique constraints, relations.
+- **Aturan Bisnis & Validasi:** Unique constraints, relations, format validations, AND the explicit **Error Messages** expected to be shown to the user when validation fails.
 - **Sample Data:** A Markdown table illustrating what the data looks like. Columns should reflect the actual fields (e.g., `id`, `name`, `status`, `created_at`). This helps Frontend developers mock the UI.
 
 ## 4. Updating an Existing PRD

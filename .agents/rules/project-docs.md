@@ -1,35 +1,39 @@
-# Dokumen Proyek (Requirements & Technical)
+# Project Documentation Rules (Requirements & Technical)
 
-Workspace `hris-docs` adalah **Control Plane** proyek. Ada tiga pilar dokumen utama yang wajib dirancang dan disimpan di sini secara permanen sebelum eksekusi kode dilakukan:
+The `hris-docs` workspace serves as the **Control Plane** of the project. There are three main document pillars that MUST be designed and permanently stored here before any code execution takes place.
 
-## 1. Product Requirements Document (PRD) (Fase Bisnis)
-- Jika *user* meminta rancangan fitur, *requirement*, atau alur bisnis (bukan implementasi teknis murni), gunakan format PRD.
-- **WAJIB** disimpan di folder `PRD/` (contoh: `PRD/employee.md`).
-- Format penulisan wajib mematuhi template `PRD/_TEMPLATE.md` dan menggunakan *skill* `scaffold-prd`.
-- **Prinsip**: PRD hanya memuat WHAT dan WHY, tidak membahas HOW (jangan bahas arsitektur kode, jenis validasi Svelte, atau relasi SQL fisik di sini).
+**CRITICAL LANGUAGE REQUIREMENT:** Although these rules and associated AI skills are written in English for optimal LLM comprehension, **ALL generated output documents (PRD, TRD, DBML, and TRD Extensions) MUST be written in Indonesian.**
 
-## 2. Dokumen Teknis & Arsitektur (Fase Desain)
-Setelah PRD disetujui, spesifikasi teknis (HOW) dijabarkan secara terpisah untuk Backend (BE) dan Frontend (FE). Dokumen-dokumen ini nantinya akan dipublikasikan sebagai GitHub Issues untuk dikerjakan oleh masing-masing tim/agen.
+## 1. Product Requirements Document (PRD) (Business Phase)
+- If the user requests feature designs, requirements, or business flows (not pure technical implementations), use the PRD format.
+- **MUST** be saved in the `PRD/` folder (e.g., `PRD/employee.md`).
+- Formatting MUST adhere to the `PRD/_TEMPLATE.md` template and utilize the `scaffold-prd` skill.
+- **Core Principle:** PRDs ONLY contain the WHAT and WHY. Do NOT discuss the HOW (no code architecture, Svelte validation types, or physical SQL relationships should be present here).
+
+## 2. Technical & Architecture Documents (Design Phase)
+After a PRD is approved, the technical specifications (the HOW) are detailed separately for Backend (BE) and Frontend (FE). These documents will eventually be published as GitHub Issues to be executed by their respective teams/agents.
 
 ### A. TRD BE (`TRD/BE/<domain_name>/`)
-- Disimpan di sub-folder per domain, misalnya `TRD/BE/employee/tech-spec.md`.
-- Membahas arsitektur DDD, kontrak API, *sequence diagram* logika bisnis, penanganan error, dan *decision log* (ADR).
-- **Tingkat Kelengkapan:** 
-  - **Simpel**: Cukup skema DBML & ringkasan kontrak API.
-  - **Sedang**: `tech-spec.md` (arsitektur inti + API terperinci).
-  - **Kompleks**: `tech-spec.md` + `user-stories.md` + `decision-log.md`.
+- Saved in a sub-folder per domain, e.g., `TRD/BE/employee/tech-spec.md`.
+- Discusses DDD architecture, API contracts, business logic sequence diagrams, error handling, and decision logs (ADR).
+- **Completeness Levels:**
+  - **Simple**: DBML schema & brief API contract summary.
+  - **Medium**: `tech-spec.md` (core architecture + detailed API).
+  - **Complex**: `tech-spec.md` + the 4 extension files.
 
 ### B. TRD FE (`TRD/FE/<domain_name>/`)
-- Disimpan di sub-folder per domain, misalnya `TRD/FE/employee/tech-spec.md`.
-- Membahas desain komponen UI Svelte, *state management* (penggunaan Runes Svelte 5), *mock-up* data untuk pengembangan paralel, serta strategi *client-side validation* dan *error handling*.
+- Saved in a sub-folder per domain, e.g., `TRD/FE/employee/tech-spec.md`.
+- Discusses Svelte UI component design, state management (using Svelte 5 Runes), data mock-ups for parallel development, client-side validation strategies, and error handling.
 
-### C. Dokumen Pendukung (Opsional)
-Berlaku untuk **kedua sisi (TRD BE maupun FE)**. Dibuat jika modul yang didesain memiliki kompleksitas tinggi. Dokumen ini dapat disimpan di sub-folder domain masing-masing (contoh: `TRD/BE/employee/data-dictionary.md` atau `TRD/FE/employee/infrastructure.md`):
-- **`data-dictionary.md`**: Berisi *whitelist enum*, kamus status (lifecycle data), dan standar *magic string*. Di BE ini menjadi acuan validasi & tipe DB, sementara di FE menjadi acuan *dropdown options* & *state mapping*.
-- **`infrastructure.md`**: Penjelasan interaksi dengan infrastruktur eksternal/pihak ketiga. Di BE contohnya: arsitektur *bucket* MinIO atau Redis. Di FE contohnya: integrasi CDN khusus, WebSockets, atau konfigurasi SDK eksternal spesifik domain.
+### C. Supporting Documents (TRD Extensions)
+Applicable to **both sides (TRD BE and FE)**. Created when the designed module has high complexity. These documents are stored alongside `tech-spec.md` in their respective domain sub-folders:
+- **`user-stories.md`**: Breaks down the specifications from `tech-spec.md` into actionable engineering tasks (tickets).
+- **`decision-log.md`**: Records Architecture Decision Records (ADR) that answer "WHY" a specific technology or pattern was chosen (e.g., why SSR is disabled, why Redis is not used).
+- **`data-dictionary.md`**: Contains enum whitelists, status dictionaries (lifecycle data), magic string standards, and precise Error Message Mappings (e.g., 401/422).
+- **`infrastructure.md`**: Explains interactions with the environment or external infrastructure (e.g., Secret Keys, Cookie configurations, Dependency Injection/Mocking flags, S3/Redis integrations).
 
 ## 3. Database Markup (DBML)
-- Skema database relasional **WAJIB** ditulis dalam format DBML (`.dbml`).
-- Disimpan di folder `TRD/BE/databases/` (contoh: `TRD/BE/databases/employee.dbml`).
-- DBML adalah **sumber tunggal** migrasi SQL dan perancangan *database* di tim BE. Data *dummy* tabel di PRD **tidak** menggantikan struktur DBML. 
-- Gunakan *skill* `scaffold-dbml` untuk menerjemahkan bab "Data Schema" di PRD menjadi DBML fisik yang presisi.
+- Relational database schemas **MUST** be written in DBML format (`.dbml`).
+- Saved in the `TRD/BE/databases/` folder (e.g., `TRD/BE/databases/employee.dbml`).
+- DBML is the **single source of truth** for SQL migrations and database design in the BE team. Dummy table data in the PRD does **NOT** replace the physical DBML structure.
+- Use the `scaffold-dbml` skill to precisely translate the "Data Schema" chapter of the PRD into physical DBML.

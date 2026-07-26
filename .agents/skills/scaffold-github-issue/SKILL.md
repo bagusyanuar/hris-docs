@@ -15,55 +15,59 @@ Before generating the issue, you MUST read the corresponding TRD (Technical Requ
 - If targeting Frontend, read `TRD/FE/...`
 - Always cross-reference with the PRD for Acceptance Criteria.
 
-## 2. Issue Output Format
+## 2. Issue Output Format (Backend vs Frontend)
 Your output must be a Markdown block that the user can directly copy-paste into GitHub's "New Issue" body.
 
-### Issue Title
-The title must be descriptive and follow this pattern:
-`[FE] or [BE] - <Module Name>: <Feature/Task Name>`
-*(Example: `[BE] - Employee: Create CRUD Endpoints for Master Employee`)*
+### A. Backend Issues
+For Backend requests, generate **ONE** comprehensive issue.
+- **Title Pattern:** `[BE] - <Module Name>: <Feature/Task Name>`
+- **Execution Checklist:** Break down by DB Migration, Domain layer, Application layer (Use Cases), Adapter (Handlers), and writing Unit Tests.
 
-### Issue Body
-The issue body MUST contain the following sections:
+### B. Frontend Issues (SPLIT: Slicing & Integration)
+For Frontend requests, you MUST generate **TWO SEPARATE** Markdown blocks representing two distinct sequential issues.
 
-#### 1. 🎯 Objective
-A brief 1-2 sentence summary of what the engineer needs to build, referencing the PRD goal.
+**Issue 1: Slicing Phase**
+- **Title Pattern:** `[FE Slicing] - <Module Name>: <Feature/Task Name>`
+- **Objective:** Focus entirely on UI development, layout, and mocking.
+- **Execution Checklist MUST Include:** 
+  - Creation of UI Components and Layouts.
+  - Form validation (e.g., Zod, Superforms).
+  - State Management (Svelte 5 Runes).
+  - **Dependency Injection Mocking:** Implementation of the mock repository (`MockRepository`) and enforcing the `useMock = true` local flag. Do NOT mention MSW.
 
-#### 2. 📚 References
-Links to ALL documents the engineer MUST read before coding. **Format these as clickable Markdown links** pointing to the `hris-docs` GitHub repository so both humans and AI agents can fetch them easily.
-*Example:* `[PRD/auth.md](https://github.com/bagusyanuar/hris-docs/blob/main/PRD/auth.md)`
-- **PRD:** `[Link to PRD]`
-- **TRD Main:** `[Link to tech-spec.md]`
-- **TRD Supporting Docs:** Include links to `user-stories.md`, `decision-log.md`, `data-dictionary.md`, and `infrastructure.md` if they exist.
-- **Figma/Design:** `[Link to Figma]` (if FE)
+**Issue 2: Integration Phase**
+- **Title Pattern:** `[FE Integration] - <Module Name>: <Feature/Task Name>`
+- **Objective:** Focus entirely on connecting the UI to the real Backend API.
+- **Execution Checklist MUST Include:**
+  - Flipping the DI container flag to `useMock = false`.
+  - Implementation of the real API repository (`ApiRepository`) using `fetch`.
+  - Handling real network errors and API Interceptor logic (e.g., 401 token rotations).
+  - The UI (HTML/CSS) should NOT be modified in this ticket.
 
-#### 3. 🛠️ Execution Checklist
-Break down the TRD into granular, actionable checkboxes (`- [ ]`). This is the most critical part. 
-- **For BE:** Break down by DB Migration, Domain layer, Application layer (Use Cases), Adapter (Handlers), and writing Unit Tests.
-- **For FE:** Break down by Types/Interfaces creation, State/Runes setup, API Service setup, UI Component building, and Validation.
+## 3. Mandatory Sections for ALL Issues
+Every issue body (whether BE, FE Slicing, or FE Integration) MUST contain:
+1. **🎯 Objective:** 1-2 sentence summary of what to build.
+2. **📚 References:** Clickable Markdown links to PRD, TRD Main, TRD Extensions (user-stories, decision-log, etc.) pointing to the `hris-docs` repository.
+3. **🛠️ Execution Checklist:** Granular `- [ ]` actionable checkboxes as described above.
+4. **✅ Acceptance Criteria:** The exact GIVEN-WHEN-THEN rules extracted from the PRD.
+5. **🛑 Technical Constraints:** Strict rules from the TRD (e.g., "Must use UUID", "ssr=false", "useMock flag").
 
-#### 4. ✅ Acceptance Criteria (Definition of Done)
-Extract the exact GIVEN-WHEN-THEN acceptance criteria from the PRD that apply to this specific engineering task.
-
-#### 5. 🛑 Technical Constraints
-Summarize any strict rules from the TRD (e.g., "Must use UUID", "Must enforce company_id scope", "Must use Svelte Runes").
-
-## 3. Workflow Rule (Default: Chat Output)
+## 4. Workflow Rule (Default: Chat Output)
 By default, do NOT save the issue text as a file in the repository. Output the Markdown payload directly in the chat so the user can copy it to the GitHub UI.
 
-## 4. Automation Rule (Execution via GitHub CLI)
+## 5. Automation Rule (Execution via GitHub CLI)
 If the user explicitly asks to "create" or "update" the issue automatically:
 1. **Check for Token:** Read the `hris-docs/.env` file. If `GH_TOKEN` is `ghp_your_personal_access_token_here` or empty, ask the user to fill it in first.
-2. **Execute Create:** Use the `gh issue create` command to push a new issue directly to GitHub.
+2. **Execute Create (Backend):**
    ```bash
    export GH_TOKEN=$(grep GH_TOKEN hris-docs/.env | cut -d '=' -f2)
-   cd hris-<backend_or_frontend>
+   cd hris-backend
    gh issue create --title "[Title]" --body "[Markdown Body]"
    ```
-3. **Execute Edit (Update):** If the user asks to update an *existing* issue (e.g., "update issue #1"), use the `gh issue edit` command.
+3. **Execute Create (Frontend - Two Steps):** You must run the command twice, once for Slicing and once for Integration.
    ```bash
    export GH_TOKEN=$(grep GH_TOKEN hris-docs/.env | cut -d '=' -f2)
-   cd hris-<backend_or_frontend>
-   gh issue edit <ISSUE_NUMBER> --title "[New Title]" --body-file [temp_file.md]
+   cd hris-frontend
+   gh issue create --title "[FE Slicing]..." --body "[Slicing Body]"
+   gh issue create --title "[FE Integration]..." --body "[Integration Body]"
    ```
-4. Only execute these if you are absolutely sure of the target repository (`hris-backend` atau `hris-frontend`).

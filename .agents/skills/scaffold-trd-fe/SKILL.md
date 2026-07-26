@@ -15,9 +15,13 @@ When the user asks to generate a TRD (or technical specs) for the Frontend based
 - **Source of Truth:** A TRD FE must always reference an existing approved PRD, and align with the API Contracts from the BE TRD (if available).
 
 ## 2. Tech Stack & Architecture Constraints
+**CRITICAL ROLE: TRANSLATING BUSINESS TO TECH**
+Because the PRD is written strictly in business language without technical jargon, it is YOUR JOB as the TRD generator to infer and map those business intents into concrete frontend technical implementations. (e.g., Translate "Secure User Session" into `HttpOnly Cookies`, translate "Access Control" into `Client-Side Route Guards` and `Token Interceptors`, etc.).
+
 The Frontend uses **Svelte 5** with modern architecture. Your TRD must reflect this:
+- **SPA Rendering Mode:** The application is built as a pure Single Page Application (`ssr = false` using `adapter-static`). Server-side hooks (`hooks.server.ts`) cannot be used for route protection.
 - **State Management:** You MUST use Svelte 5 **Runes** (`$state`, `$derived`, `$effect`) for all reactivity. Avoid Svelte 4 store patterns unless absolutely necessary.
-- **Component Hierarchy:** Separate UI into *Smart* components (Containers/Pages that fetch data) and *Dumb* components (Presentational pure UI that only receives props).
+- **UI Architecture:** Do NOT dictate exact Svelte component names or tree structures (like `<LoginForm />`). Delegate UI slicing to the FE codebase rules. Focus the TRD on "UI Behavior" (loading states, form bindings, error displays).
 - **Data Fetching & Mocking:** Explain how the FE will mock data while the BE API is not yet ready, and how it will transition to real API integration.
 
 ## 3. Mandatory Structure of TRD FE
@@ -27,14 +31,29 @@ A UI architecture design file (e.g., `tech-spec.md`) for FE must contain:
 Link to the PRD file and specify the version being implemented.
 
 ### 3.2. Routing & Layouts
-Define the application route URLs for this module and the parent layouts wrapping them.
+Define the conceptual route URLs (e.g., `/login`, `/dashboard`). Focus on the **Access Type** (Public/Protected) and **Layout Context** (e.g., uses sidebar, blank layout) rather than dictating exact file paths like `src/routes/...`. Exact folder structures and file naming should be delegated to the Frontend repository's codebase rules.
 
-### 3.3. Svelte Component Architecture
-List the components to be created. Define the `props` they receive, the events they `dispatch`, and their internal `$state`.
-*Example:* `<EmployeeForm />`, `<EmployeeTable />`
+### 3.3. UI Behavior & Interaction Requirements
+Describe the expected technical behaviors of the UI without dictating the exact component files. Explain how the UI must react to state changes, such as disabling buttons during API mutations, binding inputs to form libraries (e.g., Superforms), and rendering error states. Do NOT define specific component names.
 
 ### 3.4. State Management & Reactivity
 Explain the data flow. How does the UI react to *Loading*, *Error*, and *Success* states from the API? How is global state (e.g., User Login data) accessed by this component using Runes?
 
 ### 3.5. Client-Side Validation
 Detail the form validation rules on the browser side before data is sent to the BE (e.g., email format, strong password, required fields). This must be synchronized with the "Acceptance Criteria" in the PRD.
+
+### 3.6. API Client & Interceptors (If Applicable)
+Detail the logic for API wrappers or interceptors. For example, how does the module handle `401 Unauthorized` responses? Does it queue requests and trigger a background token refresh before retrying?
+
+### 3.7. SPA Route Protection (If Applicable)
+Explain how route guarding is implemented purely on the client-side for this module. This MUST use SvelteKit's client-side `load` function in `+layout.ts` or a reactive global state subscriber in `+layout.svelte`, avoiding `hooks.server.ts`.
+
+### 3.8. Data Mocking (Development Phase)
+Specify how Clean Architecture and Dependency Injection will be used for mocking data (Ports and Adapters). Describe how a local, domain-specific `useMock` flag (NOT a global `.env` variable) controls whether the UI consumes a real API repository or a dummy mock repository. This ensures per-module mocking independence. Do NOT use MSW (Mock Service Worker).
+
+## 4. TRD Extensions (For Complex Modules)
+If the module is complex and requires supporting documentation, you MUST also generate the 4 extension files in the same directory alongside `tech-spec.md`:
+- `user-stories.md`: Breakdown of engineering tasks based on the `tech-spec.md`.
+- `decision-log.md`: Architectural decisions and justifications (ADR).
+- `data-dictionary.md`: Enums, status lifecycles, and exact error message mappings.
+- `infrastructure.md`: Environment variables, secrets, and system-level integrations.

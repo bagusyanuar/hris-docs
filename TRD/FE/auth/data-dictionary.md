@@ -1,24 +1,24 @@
-# Data Dictionary: Auth Module (Frontend)
+# Data Dictionary & Error Mapping: Auth Frontend
 
-Berikut adalah translasi atau perlakuan data yang dilakukan oleh Svelte Frontend saat menerima respons dari Backend.
+Dokumen ini memetakan kode dari Backend menuju antarmuka visual (Svelte) yang dijanjikan dalam PRD.
 
-## 1. Zod Validation Schema (UI Dictionary)
-Batas kaku (kamus validasi) yang diatur di sisi form SvelteKit-Superforms:
+## 1. Validasi Regular Expression (Regex) Klien
 
-| Field UI | Tipe Skema Zod | Keterangan Pesan Error Jika Dilanggar |
-|----------|----------------|---------------------------------------|
-| `email` | `z.string().email()` | "Format email tidak valid" |
-| `password` | `z.string().min(8)` | "Kata sandi minimal 8 karakter" |
+Untuk mengurangi lalu lintas jaringan ke API sesuai *Skenario 6 PRD*, Zod Schema pada SvelteKit Form (*Superforms*) akan menerapkan regex ketat berikut sebelum tombol *submit* bekerja:
 
-## 2. Pemetaan State Otentikasi (Svelte Runes)
-Sistem FE akan menyimpan status pengguna (*current user*) secara global:
+| Input Field | Pattern Regex | Pesan Peringatan Klien |
+|-------------|---------------|------------------------|
+| `email` | `z.string().email()` | `"Format email tidak valid"` |
+| `password` | `/^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])(?=.{8,})/` | `"Password minimal 8 karakter, wajib mengandung huruf kapital, angka, dan karakter spesial"` |
 
-| Variabel Global Svelte | Tipe Data Asumsi | Sumber Data |
-|------------------------|------------------|-------------|
-| `currentUser.isAuthenticated` | boolean | Hasil evaluasi keberadaan token. |
-| `currentUser.id` | string (UUID) | Di-ekstrak dari `payload.user_id` di dalam token JWT. |
-| `currentUser.role` | string | Di-ekstrak dari `payload.role` di dalam token JWT. |
+## 2. Pemetaan API Response ke UI Toast (Alert)
 
-## 3. Kamus Error Lemparan Backend
-Pemetaan khusus dari pesan *error* HTTP 401 ke teks yang ramah UX di layar.
-- Jika HTTP 401 merespon pesan apapun dari Backend $\rightarrow$ Tampilkan: *"Email atau kata sandi yang Anda masukkan salah, atau akun Anda dinonaktifkan."* (Digeneralisasi demi alasan UX dan privasi).
+Berdasarkan *API Contract* di TRD Backend, komponen *Notification/Toast* di Frontend harus menafsirkan *error code* sebagai berikut:
+
+| HTTP Status API | Isi Pesan API | Output Visual di Layar Klien |
+|-----------------|---------------|------------------------------|
+| `200 OK` | (Token) | (Tidak ada alert, *Redirect* ke `/dashboard`) |
+| `422 Unprocessable` | "Format email tidak valid" | Tulisan merah berkedip di *bawah* kolom input email. |
+| `401 Unauthorized` | "Kredensial tidak valid" | Toast merah melayang di pojok layar: *"Email atau sandi salah"* |
+| `401 Unauthorized` | "Akun tidak aktif" | Modal besar/Toast kuning peringatan: *"Akun Anda telah dinonaktifkan. Hubungi HR."* |
+| `500 Server Error` | - | Toast darurat: *"Gangguan server internal. Coba beberapa saat lagi."* |
