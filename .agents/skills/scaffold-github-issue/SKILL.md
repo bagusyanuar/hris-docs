@@ -30,9 +30,10 @@ The issue body MUST contain the following sections:
 A brief 1-2 sentence summary of what the engineer needs to build, referencing the PRD goal.
 
 #### 2. 📚 References
-Links to the documents the engineer MUST read before coding:
+Links to ALL documents the engineer MUST read before coding:
 - **PRD:** `[Link to PRD in hris-docs]`
-- **TRD:** `[Link to TRD in hris-docs]`
+- **TRD Main:** `[Link to tech-spec.md or ui-architecture.md]`
+- **TRD Supporting Docs:** Include links to `user-stories.md`, `decision-log.md`, `data-dictionary.md`, and `infrastructure.md` if they exist in the TRD folder.
 - **Figma/Design:** `[Link to Figma]` (if FE)
 
 #### 3. 🛠️ Execution Checklist
