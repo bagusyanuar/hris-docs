@@ -1,40 +1,18 @@
-# Data Dictionary: Auth Backend
+# TRD Extension: Data Dictionary (Backend Auth)
 
-Dokumen ini mendefinisikan standar tipe data, validasi, dan *magic strings* yang digunakan dalam implementasi kode *Golang* untuk modul Auth.
+Dokumen ini berisi standar pesan *error* dan *magic strings* yang digunakan dalam modul.
 
-## 1. Pemetaan Field `status` (Tabel `users`)
+## 1. Magic Strings / Enums
+- `Authorization: Bearer <token>`: Format standar header HTTP untuk *access token*.
+- `HttpOnly`, `Secure`, `SameSite=Strict`: Atribut wajib untuk pengaturan Cookie `refresh_token`.
+- `active`: Status pengguna (dari modul Employee/User) yang menjadi syarat mutlak kelulusan *login*.
 
-Modul Auth menjadi penjaga gawang pertama terhadap lifecycle entitas User. Berdasarkan PRD, hanya `status` tertentu yang boleh login:
+## 2. Error Message Mappings (Sesuai PRD)
+Backend **wajib** mengembalikan pesan *error* ini secara presisi pada JSON respons:
 
-| Enum (String) | Lolos Login? | Keterangan |
-|---------------|--------------|------------|
-| `active`      | ✅ Ya         | Karyawan aktif yang sah. |
-| `inactive`    | ❌ Tidak      | Akun dibekukan sementara. |
-| `suspended`   | ❌ Tidak      | Terlibat kasus hukum / pelanggaran. |
-| `offboarded`  | ❌ Tidak      | Karyawan sudah resign. |
-
-**Aturan Kode:** Pengecekan ini harus di- *hardcode* logikanya di `LoginUseCase`. 
-
-## 2. Format Error Messages (Skenario 6 PRD)
-
-Backend WAJIB mengembalikan JSON spesifik jika payload `POST /api/v1/auth/login` tidak sesuai standar:
-
-| Kasus Kegagalan | HTTP Status | Pesan (JSON Response) |
-|-----------------|-------------|-----------------------|
-| Email bukan format `@` yang valid | `422 Unprocessable Entity` | `"Format email tidak valid"` |
-| Password < 8 karakter | `422 Unprocessable Entity` | `"Password minimal 8 karakter, wajib mengandung huruf kapital, angka, dan karakter spesial"` |
-| Password tidak ada huruf kapital | `422 Unprocessable Entity` | *"Sda"* |
-| Password tidak ada angka | `422 Unprocessable Entity` | *"Sda"* |
-| Password tidak ada simbol khusus | `422 Unprocessable Entity` | *"Sda"* |
-
-## 3. JWT Claims Dictionary
-
-Berikut adalah struktur JSON resmi yang di-*encode* ke dalam token JWT (bersama standar klaim RFC):
-
-| Key | Tipe Data Golang | Deskripsi |
-|-----|------------------|-----------|
-| `sub` | `uuid` | (Subject) Alias untuk `user_id` dari tabel `users`. |
-| `role` | `string` | Hak akses, saat ini di-*hardcode* `"employee"`. |
-| `type` | `string` | Tipe token, bernilai `"access"` atau `"refresh"`. |
-| `exp` | `int64` | Waktu kadaluwarsa (Unix epoch). |
-| `iat` | `int64` | Waktu diterbitkan (Unix epoch). |
+- **422 Unprocessable Entity:**
+  - Jika email salah format: `"Format email tidak valid"`
+  - Jika password gagal validasi kompleksitas (min 8, huruf kapital, angka, simbol): `"Password minimal 8 karakter, wajib mengandung huruf kapital, angka, dan karakter spesial"`
+- **401 Unauthorized:**
+  - Jika email/password salah: `"Kredensial tidak valid"`
+  - Jika `status != active`: `"Akun tidak aktif"`

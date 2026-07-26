@@ -43,6 +43,7 @@ For Frontend requests, you MUST generate **TWO SEPARATE** Markdown blocks repres
   - Implementation of the real API repository (`ApiRepository`) using `fetch`.
   - Handling real network errors and API Interceptor logic (e.g., 401 token rotations).
   - The UI (HTML/CSS) should NOT be modified in this ticket.
+- **API Contract References:** The AI MUST instruct the engineer to read the `swagger.json` located in `hris-docs/API_CONTRACTS/` or open the staging Swagger UI link to determine the exact payload structures before writing the `ApiRepository`.
 
 ## 3. Mandatory Sections for ALL Issues
 Every issue body (whether BE, FE Slicing, or FE Integration) MUST contain:

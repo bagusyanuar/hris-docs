@@ -11,7 +11,11 @@ The `hris-docs` workspace serves as the **Control Plane** of the project. There 
 - **Core Principle:** PRDs ONLY contain the WHAT and WHY. Do NOT discuss the HOW (no code architecture, Svelte validation types, or physical SQL relationships should be present here).
 
 ## 2. Technical & Architecture Documents (Design Phase)
-After a PRD is approved, the technical specifications (the HOW) are detailed separately for Backend (BE) and Frontend (FE). These documents will eventually be published as GitHub Issues to be executed by their respective teams/agents.
+After a PRD is approved, the technical specifications (the HOW) are detailed separately for Backend (BE) and Frontend (FE). 
+
+**API Contract Source of Truth (Swagger):** 
+Do **NOT** write static JSON request/response payloads in any TRD. TRDs should only define the endpoints and their business intent. The exact JSON schema must be defined in the Backend code using Swagger annotations.
+When the BE team finishes an endpoint, they **MUST** export the `swagger.json` (or `.yaml`) and push it to the `API_CONTRACTS/` folder in this repository.
 
 ### A. TRD BE (`TRD/BE/<domain_name>/`)
 - Saved in a sub-folder per domain, e.g., `TRD/BE/employee/tech-spec.md`.

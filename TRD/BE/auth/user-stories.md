@@ -1,41 +1,24 @@
-# User Stories: Auth Module (Backend)
+# TRD Extension: User Stories (Backend Auth)
 
-Dokumen ini memecah spesifikasi teknis dari `tech-spec.md` menjadi tiket kerja (*actionable tasks*) untuk tim Golang Backend.
+Dokumen ini memecah arsitektur `tech-spec.md` menjadi tiket-tiket kerja yang siap dieksekusi.
 
-## 1. Setup Infrastruktur JWT
-- **Sebagai** Backend Engineer,
-- **Saya ingin** mengimplementasikan fungsi kriptografi `HS256` untuk men-generate JWT (Access & Refresh),
-- **Sehingga** sistem dapat menerbitkan token yang kebal dari pemalsuan.
-- **Kriteria Penerimaan (AC):**
-  - Buat interface `TokenGenerator`.
-  - Buat implementasinya di layer *Adapter* menggunakan *library* standar JWT.
-  - Membutuhkan kunci rahasia dari *environment variable*.
+## 1. Persiapan Infrastruktur Otentikasi
+- **Task:** Konfigurasi environment variables untuk rahasia JWT (e.g., `JWT_SECRET`, `JWT_EXPIRES_IN`).
+- **Task:** Pembuatan *interface* `TokenGenerator` di Domain Layer dan implementasinya menggunakan library JWT resmi Golang di Adapter Layer.
+- **Task:** Implementasi komparasi *password* menggunakan library **Bcrypt**.
 
-## 2. Endpoint Login & Validasi Bcrypt
-- **Sebagai** pengguna yang sah,
-- **Saya ingin** API `/api/v1/auth/login` memvalidasi kredensial email dan password saya,
-- **Sehingga** saya bisa mendapatkan sesi (*Token Pair*).
-- **Kriteria Penerimaan (AC):**
-  - Harus menerapkan validasi Payload (Format Email, dan Regex Password).
-  - Melempar `422 Unprocessable Entity` jika payload tidak valid (sesuai *Data Dictionary*).
-  - Harus mengecek kecocokan *password* menggunakan `bcrypt.CompareHashAndPassword`.
-  - Wajib menolak *user* dengan pesan "Akun tidak aktif" jika field DB `status != active`.
-  - Merespon dengan `200 OK`, JSON berisi `access_token`, dan Header `Set-Cookie` berisi `refresh_token` (*HttpOnly, Secure*).
+## 2. Implementasi Endpoint Login
+- **Task:** Buat `LoginUseCase` di Application Layer yang mengonsumsi `user.Repository`. Wajib memverifikasi bahwa akun berstatus `active`!
+- **Task:** Buat REST Handler untuk `POST /api/v1/auth/login`. Tangani *payload validation* sesuai Swagger.
+- **Task:** Handler wajib mengeset `refresh_token` ke dalam *HttpOnly Cookie*.
 
-## 3. Auth Middleware
-- **Sebagai** sistem keamanan internal,
-- **Saya ingin** sebuah *Middleware* fiber yang mampu membaca header `Authorization: Bearer <token>`,
-- **Sehingga** saya bisa melarang pengguna tak dikenal masuk ke endpoint internal.
-- **Kriteria Penerimaan (AC):**
-  - Parsing token dan validasi *signature*.
-  - Menyuntikkan klaim `user_id` ke dalam Fiber Context.
-  - Melempar `401 Unauthorized` jika token kadaluwarsa atau hilang.
+## 3. Implementasi Endpoint Refresh Token
+- **Task:** Buat `RefreshUseCase` yang bertugas memvalidasi *refresh token* lama dan menerbitkan *Token Pair* baru.
+- **Task:** Buat REST Handler untuk `POST /api/v1/auth/refresh` yang membaca *Cookie*, bukan JSON body.
 
-## 4. Endpoint Refresh Token
-- **Sebagai** pengguna,
-- **Saya ingin** sesi saya diperpanjang otomatis di belakang layar,
-- **Sehingga** saya tidak perlu login ulang berulang kali.
-- **Kriteria Penerimaan (AC):**
-  - Buat endpoint `/api/v1/auth/refresh`.
-  - Baca nilai `refresh_token` khusus dari *Cookie*.
-  - Jika valid, terbitkan JSON berisi `access_token` baru, dan timpa Cookie lama dengan `refresh_token` yang baru (Rotasi).
+## 4. Middleware & Pengamanan
+- **Task:** Buat `AuthMiddleware` yang mengekstraksi `Bearer Token` dari header, memverifikasi klaim, dan meneruskannya ke *handler* berikutnya.
+
+## 5. Dokumentasi API
+- **Task:** Tambahkan anotasi Swagger pada seluruh *endpoint* Auth (Login & Refresh).
+- **Task:** *Generate* `swagger.json` dan *push* ke `hris-docs/API_CONTRACTS/auth.json`.

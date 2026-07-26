@@ -1,40 +1,15 @@
-# User Stories: Auth Module (Frontend)
+# TRD Extension: User Stories (Frontend Auth)
 
-Dokumen ini memecah spesifikasi teknis dari `tech-spec.md` menjadi tiket kerja untuk tim Svelte Frontend.
+Dokumen ini memecah arsitektur FE menjadi tiket-tiket kerja yang siap dieksekusi, dengan pembagian fase *Slicing* dan *Integration*.
 
-## 1. Komponen Antarmuka (Form Login)
-- **Sebagai** pengguna,
-- **Saya ingin** melihat halaman form dengan *input* email dan password,
-- **Sehingga** saya bisa memasukkan data profil saya untuk masuk ke sistem.
-- **Kriteria Penerimaan (AC):**
-  - Pembuatan rute `/login`.
-  - Integrasikan library Zod dengan *Superforms* untuk form validation di klien.
-  - Implementasikan validasi wajib: email format, dan pola kekuatan password sesuai regex.
+## FASE 1: SLICING [UI & Mocking]
+- **Task:** Buat kerangka UI statis (`HTML/CSS`) untuk halaman Login di `src/routes/login/+page.svelte`.
+- **Task:** Pasang dan konfigurasi `sveltekit-superforms` dan Zod untuk input `email` dan `password` beserta pesan *error*-nya.
+- **Task:** Buat *state management* global menggunakan Svelte 5 Runes (`$state`).
+- **Task:** Bangun `AuthMockRepository` (Port/Adapter) untuk meretur simulasi sukses (data dummy token) atau simulasi gagal. Pastikan disuntikkan ke komponen dengan flag lokal `useMock = true`.
+- **Task:** Bangun *Route Guard* di `+layout.ts` (uji dengan *mock data*).
 
-## 2. Reaktivitas Mutasi API & Loading State
-- **Sebagai** pengguna yang tak sabaran,
-- **Saya ingin** tombol login menampilkan status *"Loading..."* setelah saya klik,
-- **Sehingga** saya tidak menekan tombol itu berkali-kali.
-- **Kriteria Penerimaan (AC):**
-  - Implementasikan *Svelte Query Mutation*.
-  - *Bind state `isPending`* dari Query ke komponen *Button submit*.
-  - Tangkap error `401`/`422` dan terjemahkan menjadi notifikasi/Toast bewarna merah.
-
-## 3. Penyimpanan Global State (Runes)
-- **Sebagai** sistem SPA,
-- **Saya ingin** menyimpan status bahwa pengguna telah *login* ke memori global,
-- **Sehingga** seluruh komponen di halaman *Dashboard* tahu siapa pengguna tersebut.
-- **Kriteria Penerimaan (AC):**
-  - Buat `authStore.svelte.ts` dengan variabel `$state` `currentUser` dan `accessToken`.
-  - Jangan simpan token ini ke `localStorage` (hanya di memori *Runtime* JS).
-
-## 4. Mekanisme Refresh Token (Background)
-- **Sebagai** karyawan yang bekerja berjam-jam,
-- **Saya ingin** sesi saya tetap menyala otomatis,
-- **Sehingga** saya tidak perlu login ulang di tengah presentasi.
-- **Kriteria Penerimaan (AC):**
-  - Buat fungsi pembungkus *fetch API (Interceptor)*.
-  - Jaring *error response* `401`. Tahan antrean *request* aslinya.
-  - Panggil endpoint `/refresh` secara asinkron.
-  - *Retry request* asli jika refresh sukses.
-  - *Redirect* ke `/login` jika refresh ditolak.
+## FASE 2: INTEGRATION [Koneksi API Backend Asli]
+- **Task:** Balik flag *Dependency Injection* menjadi `useMock = false`.
+- **Task:** Buat `AuthApiRepository` yang benar-benar memanggil `fetch()` ke URL BE sesuai panduan di file Swagger.
+- **Task:** Implementasikan *HTTP Interceptor* di sisi Svelte untuk merotasi *refresh token* jika menerima error 401.

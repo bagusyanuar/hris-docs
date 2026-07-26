@@ -31,7 +31,9 @@ A `tech-spec.md` file for BE must contain:
 Link to the PRD file and specify the version being implemented.
 
 ### 3.2. API Contracts
-Design the RESTful endpoints to be exposed (URL, HTTP Method, Request JSON, Response JSON, HTTP Status Codes). You MUST explicitly define **Request Payload Validation** rules and the exact **Error Messages** (e.g., for 422 status codes) to ensure alignment with the PRD. This is the BE's promise to the FE.
+Design the RESTful endpoints to be exposed (URL and HTTP Method only). State the business intent of each endpoint.
+You MUST NOT generate raw JSON payloads or exhaustive lists of HTTP status codes in this document. Instead, you MUST include the following mandatory notice:
+> **Catatan API Contract:** Detail skema *Request/Response* JSON, tipe data, dan daftar lengkap *HTTP Status Code* dikelola sepenuhnya melalui *Swagger/OpenAPI*. Tim BE **wajib** mengekspor file `swagger.json` dan menyimpannya ke folder `hris-docs/API_CONTRACTS/` segera setelah *endpoint* selesai dibangun.
 
 ### 3.3. DDD Architecture Design
 - **Domain Layer:** What entities are created? What are their business rules?
