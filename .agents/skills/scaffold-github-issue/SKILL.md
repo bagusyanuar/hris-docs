@@ -30,10 +30,11 @@ The issue body MUST contain the following sections:
 A brief 1-2 sentence summary of what the engineer needs to build, referencing the PRD goal.
 
 #### 2. 📚 References
-Links to ALL documents the engineer MUST read before coding:
-- **PRD:** `[Link to PRD in hris-docs]`
-- **TRD Main:** `[Link to tech-spec.md or ui-architecture.md]`
-- **TRD Supporting Docs:** Include links to `user-stories.md`, `decision-log.md`, `data-dictionary.md`, and `infrastructure.md` if they exist in the TRD folder.
+Links to ALL documents the engineer MUST read before coding. **Format these as clickable Markdown links** pointing to the `hris-docs` GitHub repository so both humans and AI agents can fetch them easily.
+*Example:* `[PRD/auth.md](https://github.com/bagusyanuar/hris-docs/blob/main/PRD/auth.md)`
+- **PRD:** `[Link to PRD]`
+- **TRD Main:** `[Link to tech-spec.md]`
+- **TRD Supporting Docs:** Include links to `user-stories.md`, `decision-log.md`, `data-dictionary.md`, and `infrastructure.md` if they exist.
 - **Figma/Design:** `[Link to Figma]` (if FE)
 
 #### 3. 🛠️ Execution Checklist
@@ -47,5 +48,22 @@ Extract the exact GIVEN-WHEN-THEN acceptance criteria from the PRD that apply to
 #### 5. 🛑 Technical Constraints
 Summarize any strict rules from the TRD (e.g., "Must use UUID", "Must enforce company_id scope", "Must use Svelte Runes").
 
-## 3. Workflow Rule
-Do NOT save the issue text as a file in the repository unless explicitly asked. Your primary job is to output the Markdown payload directly in the chat so the user can copy it to the GitHub UI.
+## 3. Workflow Rule (Default: Chat Output)
+By default, do NOT save the issue text as a file in the repository. Output the Markdown payload directly in the chat so the user can copy it to the GitHub UI.
+
+## 4. Automation Rule (Execution via GitHub CLI)
+If the user explicitly asks to "create" or "update" the issue automatically:
+1. **Check for Token:** Read the `hris-docs/.env` file. If `GH_TOKEN` is `ghp_your_personal_access_token_here` or empty, ask the user to fill it in first.
+2. **Execute Create:** Use the `gh issue create` command to push a new issue directly to GitHub.
+   ```bash
+   export GH_TOKEN=$(grep GH_TOKEN hris-docs/.env | cut -d '=' -f2)
+   cd hris-<backend_or_frontend>
+   gh issue create --title "[Title]" --body "[Markdown Body]"
+   ```
+3. **Execute Edit (Update):** If the user asks to update an *existing* issue (e.g., "update issue #1"), use the `gh issue edit` command.
+   ```bash
+   export GH_TOKEN=$(grep GH_TOKEN hris-docs/.env | cut -d '=' -f2)
+   cd hris-<backend_or_frontend>
+   gh issue edit <ISSUE_NUMBER> --title "[New Title]" --body-file [temp_file.md]
+   ```
+4. Only execute these if you are absolutely sure of the target repository (`hris-backend` atau `hris-frontend`).

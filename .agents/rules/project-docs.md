@@ -20,7 +20,7 @@ Setelah PRD disetujui, spesifikasi teknis (HOW) dijabarkan secara terpisah untuk
   - **Kompleks**: `tech-spec.md` + `user-stories.md` + `decision-log.md`.
 
 ### B. TRD FE (`TRD/FE/<domain_name>/`)
-- Disimpan di sub-folder per domain, misalnya `TRD/FE/employee/ui-architecture.md`.
+- Disimpan di sub-folder per domain, misalnya `TRD/FE/employee/tech-spec.md`.
 - Membahas desain komponen UI Svelte, *state management* (penggunaan Runes Svelte 5), *mock-up* data untuk pengembangan paralel, serta strategi *client-side validation* dan *error handling*.
 
 ### C. Dokumen Pendukung (Opsional)
