@@ -14,4 +14,4 @@ Workspace `hris-docs` adalah **Control Plane & Single Source of Truth** untuk pr
 
 ## Referensi Lain
 - Aturan Dokumentasi: [`rules/project-docs.md`](rules/project-docs.md) — panduan penyusunan dokumen PRD dan Teknis.
-- Skills: [`skills/`](skills/) — instruksi pembuatan dokumen, contoh: `scaffold-prd`, `scaffold-trd-be`, `scaffold-trd-fe`.
+- Skills: [`skills/`](skills/) — instruksi pembuatan dokumen, contoh: `scaffold-prd`, `scaffold-trd-be`, `scaffold-trd-fe`, `scaffold-github-issue`.
