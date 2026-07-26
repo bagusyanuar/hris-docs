@@ -4,7 +4,7 @@ version: 1.0.0
 status: Draft
 owner: bagusyanuar
 updated: 2026-07-26 13:17:00
-references_prd: ../../../PRD/auth.md
+references_prd: https://github.com/bagusyanuar/hris-docs/blob/main/PRD/auth.md
 ---
 
 # TRD Backend: Auth Module

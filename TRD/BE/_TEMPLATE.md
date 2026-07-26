@@ -4,7 +4,7 @@ version: 1.0.0
 status: Draft           # Draft | In Review | Approved | Deprecated
 owner: <Nama Arsitek/BE Lead>
 updated: <YYYY-MM-DD HH:MM:SS>
-references_prd: <Link ke file PRD>
+references_prd: <URL absolut GitHub ke file PRD>
 ---
 
 # TRD Backend: <Nama Modul>

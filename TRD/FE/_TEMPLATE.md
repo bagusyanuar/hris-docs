@@ -4,8 +4,8 @@ version: 1.0.0
 status: Draft           # Draft | In Review | Approved | Deprecated
 owner: <Nama Arsitek/FE Lead>
 updated: <YYYY-MM-DD HH:MM:SS>
-references_prd: <Link ke file PRD>
-references_trd_be: <Link ke TRD BE - opsional>
+references_prd: <URL absolut GitHub ke file PRD>
+references_trd_be: <URL absolut GitHub ke TRD BE - opsional>
 references_design: <Link Figma / UI Design (tulis "-" dengan tanda kutip jika belum ada)>
 ---
 
