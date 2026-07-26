@@ -1,0 +1,39 @@
+---
+name: scaffold-trd-fe
+description: Guide for scaffolding Technical Requirements Documents (TRD) for the Frontend (FE) to ensure architectural consistency with Svelte 5.
+---
+
+# Scaffolding TRD Frontend (Technical Requirements Document)
+
+When the user asks to generate a TRD (or technical specs) for the Frontend based on a PRD, you MUST follow these guidelines.
+
+**Language Requirement:** Although these instructions are in English, the actual TRD content you generate MUST be written in Indonesian.
+
+## 1. Directory & Context
+- **Location:** All FE TRDs MUST be saved in `TRD/FE/<domain_name>/` (e.g., `TRD/FE/employee/ui-architecture.md`).
+- **Source of Truth:** A TRD FE must always reference an existing approved PRD, and align with the API Contracts from the BE TRD (if available).
+
+## 2. Tech Stack & Architecture Constraints
+The Frontend uses **Svelte 5** with modern architecture. Your TRD must reflect this:
+- **State Management:** You MUST use Svelte 5 **Runes** (`$state`, `$derived`, `$effect`) for all reactivity. Avoid Svelte 4 store patterns unless absolutely necessary.
+- **Component Hierarchy:** Separate UI into *Smart* components (Containers/Pages that fetch data) and *Dumb* components (Presentational pure UI that only receives props).
+- **Data Fetching & Mocking:** Explain how the FE will mock data while the BE API is not yet ready, and how it will transition to real API integration.
+
+## 3. Mandatory Structure of TRD FE
+A UI architecture design file (e.g., `ui-architecture.md`) for FE must contain:
+
+### 3.1. PRD Reference
+Link to the PRD file and specify the version being implemented.
+
+### 3.2. Routing & Layouts
+Define the application route URLs for this module and the parent layouts wrapping them.
+
+### 3.3. Svelte Component Architecture
+List the components to be created. Define the `props` they receive, the events they `dispatch`, and their internal `$state`.
+*Example:* `<EmployeeForm />`, `<EmployeeTable />`
+
+### 3.4. State Management & Reactivity
+Explain the data flow. How does the UI react to *Loading*, *Error*, and *Success* states from the API? How is global state (e.g., User Login data) accessed by this component using Runes?
+
+### 3.5. Client-Side Validation
+Detail the form validation rules on the browser side before data is sent to the BE (e.g., email format, strong password, required fields). This must be synchronized with the "Acceptance Criteria" in the PRD.
