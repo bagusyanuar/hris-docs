@@ -59,16 +59,19 @@ By default, do NOT save the issue text as a file in the repository. Output the M
 ## 5. Automation Rule (Execution via GitHub CLI)
 If the user explicitly asks to "create" or "update" the issue automatically:
 1. **Check for Token:** Read the `hris-docs/.env` file. If `GH_TOKEN` is `ghp_your_personal_access_token_here` or empty, ask the user to fill it in first.
-2. **Execute Create (Backend):**
+2. **Temporary Files Rule:** You MUST create the temporary Markdown body files (`slicing.md`, `integration.md`, etc.) **inside the `hris-docs` workspace**, NOT inside the FE or BE directories. This prevents polluting the codebase directories with documentation artifacts.
+3. **Execute Create (Backend):**
    ```bash
    export GH_TOKEN=$(grep GH_TOKEN hris-docs/.env | cut -d '=' -f2)
    cd hris-backend
-   gh issue create --title "[Title]" --body "[Markdown Body]"
+   gh issue create --title "[Title]" --body-file ../hris-docs/temp_body.md
+   rm ../hris-docs/temp_body.md
    ```
-3. **Execute Create (Frontend - Two Steps):** You must run the command twice, once for Slicing and once for Integration.
+4. **Execute Create (Frontend - Two Steps):** You must run the command twice, once for Slicing and once for Integration.
    ```bash
    export GH_TOKEN=$(grep GH_TOKEN hris-docs/.env | cut -d '=' -f2)
    cd hris-frontend
-   gh issue create --title "[FE Slicing]..." --body "[Slicing Body]"
-   gh issue create --title "[FE Integration]..." --body "[Integration Body]"
+   gh issue create --title "[FE Slicing]..." --body-file ../hris-docs/temp_slicing.md
+   gh issue create --title "[FE Integration]..." --body-file ../hris-docs/temp_integration.md
+   rm ../hris-docs/temp_slicing.md ../hris-docs/temp_integration.md
    ```
