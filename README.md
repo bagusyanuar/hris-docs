@@ -37,6 +37,25 @@ Pengembangan fitur baru **wajib** mengikuti siklus berikut:
 3. **Fase Eksekusi (GitHub Issues):**
    Dokumen TRD yang sudah selesai dipublikasikan/dijadikan referensi pada GitHub Issue di repositori masing-masing (`hris-backend` atau `hris-frontend`). Engineer kemudian mengeksekusi *issue* tersebut menjadi kode yang nyata.
 
+### Pola Integrasi API (Consumer-Driven Contracts)
+Untuk pengembangan API, sangat disarankan menggunakan pendekatan **Consumer-Driven Contracts (CDC)** atau *Frontend-First API Design*.
+- **Konsep:** Tim Frontend (FE) menentukan bentuk/struktur JSON (*request/response*) yang paling optimal untuk UI mereka terlebih dahulu. Tim Backend (BE) kemudian membangun *endpoint* untuk memenuhi kontrak tersebut. Ini mencegah *over-fetching* dan memastikan API tepat sasaran.
+- **Tempat Distribusi Kontrak:** FE merumuskan format kontrak (bisa menggunakan *Markdown*, *JSON*, atau *OpenAPI/Swagger YAML*) dan menyimpannya ke dalam folder **`API_CONTRACTS/`** di repositori ini.
+- **Handover ke Backend:** Saat menerbitkan *GitHub Issue* untuk tim BE, lampirkan URL/link menuju file spesifik di dalam folder `API_CONTRACTS/` tersebut. Kontrak ini akan menjadi *Acceptance Criteria* kelulusan tugas bagi tim BE.
+## 📝 Aturan Revisi Dokumen (PRD vs TRD)
+
+Seringkali saat fase eksekusi (*coding*), ditemukan ketidaksesuaian atau kebutuhan untuk merubah desain. Berikut adalah aturan main (*Rules of Thumb*) kapan harus merevisi dokumen:
+
+**✅ Cukup Update TRD Saja (PRD Tidak Perlu Diubah):**
+- Perubahan **murni bersifat teknis** dan tidak mengubah aturan bisnis, Kriteria Penerimaan (*Acceptance Criteria*), atau *User Journey*.
+- *Contoh:* Perubahan struktur/payload JSON dari endpoint (misal merubah *flat list* menjadi *tree/nested* agar FE lebih mudah *render*), perubahan tipe data (misal `Integer` menjadi `UUID`), perubahan arsitektur komponen UI, atau optimasi performa *query* database.
+- *Action:* Update dokumen spesifikasi di `TRD/BE` atau `TRD/FE` dan tambahkan catatan perubahan di file `decision-log.md` pada modul terkait agar *engineer* lain mengetahui alasan perubahannya.
+
+**❌ WAJIB Update PRD Terlebih Dahulu:**
+- Perubahan **berdampak pada alur bisnis**, penambahan/pengurangan fitur, atau mengubah *Acceptance Criteria* yang sudah disepakati di awal.
+- *Contoh:* Menambahkan tombol "Login with Google" pada halaman otentikasi, mengubah hak akses (*Role*) untuk aksi tertentu, atau menambah langkah *step* pada sebuah proses persetujuan (Approval).
+- *Action:* Lapor/revisi dokumen di folder `PRD/` terlebih dahulu untuk menyesuaikan *scope* bisnis. Setelah disetujui, barulah update dokumen `TRD` untuk merancang teknis implementasi dari penambahan tersebut.
+
 ## 🛠️ Tech Stack & Arsitektur
 
 Tim kita menggunakan *stack* yang sangat modern (*Golang, Svelte 5, Tailwind v4, dll*). Untuk panduan arsitektur global dan daftar *tech stack* lengkap, silakan baca file **[`architecture.md`](architecture.md)**.
