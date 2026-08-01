@@ -5,7 +5,7 @@ status: Draft
 owner: bagusyanuar
 updated: 2026-08-01 23:00:00
 depends_on: [auth@1.0.1, user@1.0.1, organization@1.0.1]
-consumed_by: [employment-status@1.0.1, employee@1.0.0, workforce-structure@1.0.1, leave-type@1.0.1, work-shift@1.0.1, payroll@planned, attendance@planned, leave@planned]
+consumed_by: [employment-status@1.0.1, employee@1.0.1, workforce-structure@1.0.1, leave-type@1.0.1, work-shift@1.0.1, payroll@planned, attendance@planned, leave@planned]
 ---
 
 # Product Requirements: RBAC Module (Role-Based Access Control)

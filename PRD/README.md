@@ -22,8 +22,7 @@ Daftar seluruh Product Requirements Document di `hris-docs`. Selalu update tabel
 | [rbac.md](rbac.md) | 1.0.1 | Draft | auth@1.0.1, user@1.0.1, organization@1.0.1 | employment-status@1.0.1, employee@1.0.0, workforce-structure@1.0.1, leave-type@1.0.1, work-shift@1.0.1, payroll@planned, attendance@planned, leave@planned | 2026-08-01 23:00:00 |
 | [leave-type.md](leave-type.md) | 1.0.1 | Draft | organization@1.0.1, rbac@1.0.1 | leave@planned | 2026-08-01 23:00:00 |
 | [work-shift.md](work-shift.md) | 1.0.1 | Draft | organization@1.0.1, rbac@1.0.1 | attendance@planned | 2026-08-01 23:00:00 |
-
-> **Belum dimigrasi ke `hris-docs`** (masih di `hris-backend/docs/PRD/`): `employee.md`. Lihat [product-vision.md](product-vision.md) §5.1.
+| [employee.md](employee.md) | 1.0.1 | Draft | auth@1.0.1, user@1.0.1, organization@1.0.1, workforce-structure@1.0.1, employment-status@1.0.1, bank@1.0.0, region@1.0.0, rbac@1.0.1 | leave@planned, payroll@planned, attendance@planned, performance@planned | 2026-08-01 23:00:00 |
 
 ## Dependency Graph
 
@@ -53,11 +52,18 @@ graph TD
     Organization --> WorkShift["Work Shift"]
     RBAC --> WorkShift
     WorkShift --> Attendance["Attendance (planned)"]
+    EmploymentStatus --> Employee
+    Bank --> Employee
+    Wilayah --> Employee
+    RBAC --> Employee
+    Employee --> Leave["Leave (planned)"]
+    Employee --> Payroll
+    Employee --> Attendance
+    Employee --> Performance["Performance (planned)"]
 ```
 
 ## Ringkasan Gap
 
 | Item | Kondisi |
 |---|---|
-| PRD `employee` | Masih di `hris-backend/docs/PRD/`, belum dipindah ke `hris-docs` — migrasi menyusul (pola sama seperti `organization.md`). |
 | `PRD/_shared/glossary.md` | Belum dibuat — belum ada istilah lintas-modul yang cukup mendesak diangkat. |

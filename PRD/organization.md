@@ -5,7 +5,7 @@ status: Draft
 owner: bagusyanuar
 updated: 2026-08-01 23:00:00
 depends_on: [auth@1.0.1, bank@planned, region@planned]
-consumed_by: [workforce-structure@1.0.1, employee@1.0.0, employment-status@1.0.1, rbac@1.0.1, leave-type@1.0.1, work-shift@1.0.1, payroll@planned, attendance@planned]
+consumed_by: [workforce-structure@1.0.1, employee@1.0.1, employment-status@1.0.1, rbac@1.0.1, leave-type@1.0.1, work-shift@1.0.1, payroll@planned, attendance@planned]
 ---
 
 # Product Requirements: Organization Module

@@ -5,7 +5,7 @@ status: Draft
 owner: bagusyanuar
 updated: 2026-08-01 19:15:00
 depends_on: []
-consumed_by: [employee@1.0.0, organization@planned]
+consumed_by: [employee@1.0.1, organization@planned]
 ---
 
 # Product Requirements: Region Module (Master Data Wilayah)

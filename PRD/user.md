@@ -5,7 +5,7 @@ status: Draft
 owner: bagusyanuar
 updated: 2026-08-01 23:00:00
 depends_on: []
-consumed_by: [auth@1.0.1, employee@1.0.0, rbac@1.0.1]
+consumed_by: [auth@1.0.1, employee@1.0.1, rbac@1.0.1]
 ---
 
 # Product Requirements: User Module

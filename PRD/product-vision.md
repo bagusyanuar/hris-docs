@@ -91,7 +91,7 @@ Group / Holding (implisit = 1 instalasi aplikasi, 1 owner)
 | **User** | akun pengguna sistem | ada (sebagian — belum ada `application`/`transport`) | [user.md](user.md) |
 | **Organization** | legal & lokasi: Company (PT), Branch | ada | [organization.md](organization.md) |
 | **Workforce Structure** | struktur internal: Department, Job Title, Job Position | ada | [workforce-structure.md](workforce-structure.md) |
-| **Employee** | data & profil karyawan, sudah punya `company_id`/`branch_id` | ada | belum dimigrasi (`hris-backend/docs/PRD/employee.md`) |
+| **Employee** | data & profil karyawan, sudah punya `company_id`/`branch_id` | ada | [employee.md](employee.md) |
 | **Employment Status** | status kepegawaian sebagai master data per-PT | **Draft, belum ada kode** | [employment-status.md](employment-status.md) |
 
 ### 5.2. Concern Lintas-Modul (jadi modul/PRD sendiri)

@@ -5,7 +5,7 @@ status: Draft
 owner: bagusyanuar
 updated: 2026-08-01 23:00:00
 depends_on: [organization@1.0.1, rbac@1.0.1]
-consumed_by: [employee@1.0.0, leave@planned, payroll@planned]
+consumed_by: [employee@1.0.1, leave@planned, payroll@planned]
 ---
 
 # Product Requirements: Employment Status Module
