@@ -1,7 +1,7 @@
 # Technical Requirements Document (TRD) - Region Module
 
 ## 3.1. PRD Reference
-Implementasi ini mengacu pada PRD: [reference_data_wilayah.md](../../../PRD/reference_data_wilayah.md).
+Implementasi ini mengacu pada PRD: [region.md](../../../PRD/region.md).
 
 ## 3.2. API Contracts
 Berikut adalah daftar *endpoint* yang diekspos oleh modul ini. Tujuannya adalah melayani kebutuhan *dropdown* UI di sisi *client*.

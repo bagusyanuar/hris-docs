@@ -1,59 +1,118 @@
-# Product Requirements Document (PRD): Master Data Wilayah (Geographical Reference Data)
+---
+module: Region
+version: 1.0.0
+status: Draft
+owner: bagusyanuar
+updated: 2026-08-01 16:00:00
+depends_on: []
+consumed_by: [employee@1.0.0, organization@1.0.0]
+---
 
-## 1. Overview
-Modul Master Data Wilayah bertujuan untuk menyediakan data referensi geografis yang akurat, konsisten, dan terstruktur (hierarkis) untuk seluruh ekosistem HRIS. Data ini akan digunakan secara luas di berbagai form, seperti pendaftaran karyawan, pengisian alamat domisili/KTP, manajemen lokasi cabang kantor, hingga pelaporan perpajakan.
-Secara arsitektural, seluruh entitas ini akan dipusatkan ke dalam satu domain khusus yaitu **`internal/region`**.
+# Product Requirements: Region Module (Master Data Wilayah)
 
-## 2. Tujuan & Lingkup
-- Menyediakan struktur data administratif berjenjang: **Provinsi -> Kota/Kabupaten -> Kecamatan -> Kelurahan/Desa**.
-- Memastikan integritas dan keseragaman data lokasi di seluruh sistem dengan menggunakan ID referensi yang pasti (menghindari kesalahan ketik dari input teks bebas/manual).
-- Memberikan endpoint API yang efisien dan cepat (mendukung implementasi caching) agar frontend dapat menyajikan *cascading dropdown* (dropdown berjenjang) dengan *user experience* yang optimal.
+> **Catatan grounding:** Modul ini belum terimplementasi di kode (`internal/region` belum ada). PRD ini adalah rancangan awal (Docs & Design First) sebelum implementasi backend dimulai.
 
-## 3. User Stories
-- **Sebagai Developer/Sistem:** Saat inisialisasi awal (Deployment), saya dapat menjalankan *Database Seeder* untuk memasukkan seluruh data wilayah Indonesia secara otomatis dari sumber data yang valid (seperti BPS), agar sistem siap digunakan tanpa entri manual.
-- **Sebagai Karyawan / HR Admin:** Saat mengisi formulir yang membutuhkan alamat lengkap, saya dapat memilih "Provinsi", yang kemudian secara otomatis akan menyaring (filter) pilihan pada *dropdown* "Kota/Kabupaten" sesuai dengan provinsi yang saya pilih, dan berlanjut hingga tingkat Kelurahan.
-- **Sebagai Frontend Developer:** Saya membutuhkan *endpoint* API yang terstruktur untuk mengambil daftar provinsi, serta daftar kota, kecamatan, dan kelurahan berdasarkan *parent_id*-nya dengan waktu respons yang sangat cepat.
+---
 
-## 4. Kebutuhan Data (Data Requirements)
-Untuk mencegah isu pembaruan data jika terjadi pemekaran wilayah, sistem **wajib menggunakan Surrogate Key (UUID)** sebagai *Primary Key* (`id`), dan menyimpan **Kode Wilayah Administrasi Pemerintahan (Kemendagri)** pada kolom `administrative_code` (Unique).
+## 1. Tujuan & Dampak (The "Why")
 
-Struktur hierarki wilayah (Relational Database):
-- **Provinces (Provinsi)**: 
-  - `id` (UUID, Primary Key)
-  - `administrative_code` (String, 2 digit, Unique, ex: "32")
-  - `name` (String)
-- **Cities (Kota/Kabupaten)**: 
-  - `id` (UUID, Primary Key)
-  - `province_id` (UUID, Relasi ke Provinces)
-  - `administrative_code` (String, 4 digit, Unique, ex: "3273")
-  - `name` (String)
-- **Districts (Kecamatan)**: 
-  - `id` (UUID, Primary Key)
-  - `city_id` (UUID, Relasi ke Cities)
-  - `administrative_code` (String, 6 digit, Unique, ex: "327305")
-  - `name` (String)
-- **Sub-districts (Kelurahan/Desa)**: 
-  - `id` (UUID, Primary Key)
-  - `district_id` (UUID, Relasi ke Districts)
-  - `administrative_code` (String, 10 digit, Unique, ex: "3273051001")
-  - `name` (String)
-  - `postal_code` (String, opsional, Kode Pos)
+Data alamat (provinsi, kota/kabupaten, kecamatan, kelurahan/desa) dibutuhkan di banyak tempat — formulir data karyawan, alamat domisili sesuai KTP, lokasi cabang kantor, hingga pelaporan pajak. Kalau data ini diketik bebas oleh pengguna, rawan salah ketik dan tidak konsisten (nama wilayah yang sama bisa ditulis berbeda-beda). Modul Region menyediakan satu daftar referensi wilayah administratif Indonesia yang akurat, berjenjang (hierarkis), dan konsisten untuk dipakai seluruh sistem, sehingga integritas data lokasi terjamin dan proses pelaporan resmi (pajak, BPJS) bisa langsung memakai kode wilayah standar pemerintah.
 
-*Keuntungan menggunakan Kode Kemendagri sebagai ID:*
-1. Data pasti unik (tidak ada duplikasi nama wilayah yang membingungkan).
-2. Dari ID saja kita sudah tahu hierarkinya (misal kelurahan berawalan `3273` pasti ada di dalam kota `3273`).
-3. Saat lapor pajak atau BPJS karyawan, kodenya sudah standar nasional.
+---
 
-*Catatan: Seluruh entitas ini bersifat "Read-Heavy". Proses Create/Update/Delete (CUD) hampir tidak pernah terjadi di operasional harian, kecuali ada kebijakan pemekaran wilayah dari pemerintah pusat.*
+## 2. Scope & Out-of-Scope (Batasan Tegas)
 
-## 5. Flow & Interaksi (Cascading Selection)
-Alur interaksi pada sisi Frontend (misal pada form Alamat):
-1. UI memuat *dropdown* Provinsi dengan melakukan *fetch* ke `GET /api/v1/references/provinces`.
-2. Pengguna memilih Provinsi (misal: ID `32` - Jawa Barat).
-3. UI mengaktifkan *dropdown* Kota/Kabupaten dan melakukan *fetch* ke `GET /api/v1/references/cities?province_id=32`.
-4. Pengguna memilih Kota.
-5. Alur yang sama berulang untuk Kecamatan (`GET /api/v1/references/districts?city_id={id}`) dan Kelurahan.
+**In-Scope (Dikerjakan):**
+- Struktur data administratif berjenjang: **Provinsi → Kota/Kabupaten → Kecamatan → Kelurahan/Desa**.
+- Penyediaan data wilayah lengkap se-Indonesia sejak awal *deployment*, bersumber dari data resmi pemerintah (BPS/Kemendagri).
+- Dropdown berjenjang (*cascading dropdown*) di sisi Frontend — memilih provinsi akan menyaring pilihan kota, lalu kecamatan, lalu kelurahan.
 
-## 6. Di Luar Cakupan (Out of Scope)
-- **UI CRUD Wilayah untuk Admin:** Tidak perlu dibuatkan halaman antarmuka (UI) khusus bagi Admin HR untuk menambah, mengubah, atau menghapus data provinsi/kota satu per satu. Perubahan data ini di-*maintain* secara teknis via *Database Seeder* oleh tim IT.
-- **Data Internasional:** Pada iterasi rilis pertama ini, struktur hirarki wilayah dioptimalkan secara khusus hanya untuk format wilayah administratif negara Indonesia.
+**Out-of-Scope (TIDAK di modul ini):**
+- **Halaman pengelolaan (CRUD) wilayah untuk Admin HR** — tidak dibutuhkan antarmuka tambah/ubah/hapus provinsi/kota satu per satu oleh HR. Perubahan data (misalnya akibat pemekaran wilayah oleh pemerintah pusat) di-*maintain* secara teknis lewat *Database Seeder* oleh tim IT.
+- **Data wilayah internasional** — rilis pertama ini hanya mencakup struktur administratif Indonesia.
+
+---
+
+## 3. User Roles & Permissions
+
+| Role | Read | Create / Update / Delete |
+|------|------|---------------------------|
+| Superadmin | ✅ | ❌ (tidak ada, lihat catatan) |
+| Admin Perusahaan (HR) | ✅ (untuk dropdown alamat/cabang) | ❌ |
+| Karyawan (ESS) | ✅ (untuk dropdown alamat pribadi) | ❌ |
+
+- **Catatan tambahan:** Tidak ada role aplikasi mana pun (termasuk Superadmin) yang punya kewenangan tambah/ubah/hapus data wilayah lewat antarmuka — ini kebutuhan yang sangat jarang terjadi (hanya saat ada pemekaran wilayah resmi) dan ditangani lewat proses teknis (*Database Seeder*) oleh tim IT, bukan fitur aplikasi.
+
+---
+
+## 4. Kriteria Penerimaan (Acceptance Criteria)
+
+**Skenario 1: Pemilihan Wilayah Berjenjang (Cascading)**
+- **Given** pengguna sedang mengisi formulir yang membutuhkan alamat lengkap.
+- **When** pengguna memilih sebuah Provinsi.
+- **Then** sistem menyaring dan menampilkan hanya Kota/Kabupaten yang berada di provinsi tersebut pada dropdown berikutnya, dan proses yang sama berlanjut hingga tingkat Kelurahan/Desa.
+
+**Skenario 2: Data Tersedia Lengkap Sejak Awal**
+- **Given** sistem baru selesai di-*deploy* untuk pertama kali.
+- **When** pengguna membuka formulir yang membutuhkan data wilayah.
+- **Then** seluruh data wilayah administratif Indonesia (Provinsi hingga Kelurahan/Desa) sudah tersedia tanpa perlu entri manual satu per satu oleh pengguna.
+
+**Skenario 3: Pembaruan Akibat Pemekaran Wilayah**
+- **Given** pemerintah pusat menerbitkan kebijakan pemekaran wilayah (kode administrasi suatu daerah berubah atau daerah baru terbentuk).
+- **When** tim IT memperbarui data wilayah lewat proses teknis.
+- **Then** data karyawan/cabang yang sudah mereferensikan wilayah lama tetap valid (karena mengacu ke identitas internal sistem, bukan kode pemerintah yang bisa berubah), sementara kode administrasi wilayah tersebut diperbarui mengikuti aturan terbaru.
+
+---
+
+## 5. Technical & Architectural Constraints
+
+- **Domain-Driven Design (domain-first):** Seluruh entitas wilayah (`Province`, `City`, `District`, `SubDistrict`) disatukan dalam satu domain `internal/region`.
+- **Multi-Entity Scoping (MANDATORY):** Diklasifikasikan sebagai **Global Master** (tanpa `company_id`/`branch_id`) — **justifikasi eksplisit** sesuai `scoping-convention.md` §1: wilayah administratif Indonesia identik dan berlaku sama untuk seluruh PT dalam grup usaha, tidak ada variasi kebijakan per perusahaan.
+- **Identitas Data:** Primary Key **wajib** memakai *Surrogate Key* (UUID), **bukan** Kode Wilayah Administrasi Pemerintahan (Kemendagri) — kode Kemendagri disimpan terpisah di kolom `administrative_code` (unik). Ini mencegah masalah integritas data saat terjadi pemekaran wilayah yang mengubah kode resmi (Skenario 3).
+- **Persistensi / Database:** *Read-heavy* — hampir tidak ada operasi tulis di operasional harian aplikasi (hanya lewat Seeder teknis).
+- **UI (Frontend):** Wajib pola dropdown berjenjang (*cascading select*) yang mengambil data anak berdasarkan `parent_id` dari pilihan sebelumnya, dioptimalkan untuk respons cepat.
+
+---
+
+## 6. Dependencies (Ketergantungan)
+
+**Depends on:**
+- Tidak ada. Modul ini berdiri sendiri (*standalone reference data*), bersumber dari data resmi pemerintah (BPS/Kemendagri) lewat proses Seeder.
+
+**Consumed by:**
+- **Employee @1.0.0** — data alamat domisili/KTP karyawan mereferensikan wilayah dari modul ini.
+- **Organization @1.0.0** — lokasi cabang (Branch) mereferensikan wilayah dari modul ini.
+
+**External integrations:** Tidak ada koneksi langsung — data bersumber dari BPS/Kemendagri namun dimasukkan lewat *Database Seeder* saat *deployment*, bukan pemanggilan API pihak ketiga secara *real-time*.
+
+---
+
+## 7. Data Schema & Business Rules (Database Map)
+
+### 7.1. Province (Provinsi)
+- **Aturan Bisnis:** `administrative_code` (2 digit, sesuai kode Kemendagri) unik. `id` (UUID) tetap jadi acuan relasi, bukan `administrative_code`.
+
+| id | administrative_code | name |
+| :-- | :-- | :-- |
+| `prov-1` | `32` | Jawa Barat |
+
+### 7.2. City (Kota/Kabupaten) — 1:N dari Province
+- **Aturan Bisnis:** `administrative_code` (4 digit) unik, wajib punya `province_id` yang valid.
+
+| id | province_id | administrative_code | name |
+| :-- | :-- | :-- | :-- |
+| `city-1` | `prov-1` | `3273` | Kota Bandung |
+
+### 7.3. District (Kecamatan) — 1:N dari City
+- **Aturan Bisnis:** `administrative_code` (6 digit) unik, wajib punya `city_id` yang valid.
+
+| id | city_id | administrative_code | name |
+| :-- | :-- | :-- | :-- |
+| `dist-1` | `city-1` | `327305` | Sukajadi |
+
+### 7.4. Sub-district (Kelurahan/Desa) — 1:N dari District
+- **Aturan Bisnis:** `administrative_code` (10 digit) unik, wajib punya `district_id` yang valid. `postal_code` opsional.
+
+| id | district_id | administrative_code | name | postal_code |
+| :-- | :-- | :-- | :-- | :-- |
+| `sub-1` | `dist-1` | `3273051001` | Sukagalih | `40163` |
