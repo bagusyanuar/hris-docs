@@ -1,16 +1,16 @@
 ---
 module: Organization
-version: 2.0.0
+version: 1.0.1
 status: Draft
 owner: bagusyanuar
-updated: 2026-08-01 17:00:00
-depends_on: []
-consumed_by: [workforce-structure@1.0.0, employee@1.0.0, employment-status@1.0.0, rbac@planned, payroll@planned, attendance@planned]
+updated: 2026-08-01 23:00:00
+depends_on: [auth@1.0.1, bank@planned, region@planned]
+consumed_by: [workforce-structure@1.0.1, employee@1.0.0, employment-status@1.0.1, rbac@1.0.1, leave-type@1.0.1, work-shift@1.0.1, payroll@planned, attendance@planned]
 ---
 
 # Product Requirements: Organization Module
 
-> **Catatan grounding:** Modul ini sudah terimplementasi di backend (`internal/organization/`). PRD ini adalah standardisasi dokumentasi bisnis dari arsitektur *existing* agar selaras dengan aturan *Control Plane* `hris-docs` — sekaligus migrasi dari dokumen legacy `hris-backend/docs/PRD/organization.md` (v2.0.0, breaking scope change dari versi 1.x yang dulu juga mencakup Department/Job Title/Job Position — konsep itu sudah dipindah ke modul **Workforce Structure**, di luar cakupan PRD ini).
+> **Catatan grounding:** Modul ini sudah terimplementasi di backend (`internal/organization/`). PRD ini adalah standardisasi dokumentasi bisnis dari arsitektur *existing* agar selaras dengan aturan *Control Plane* `hris-docs` — sekaligus migrasi dari dokumen legacy `hris-backend/docs/PRD/organization.md` — breaking scope change dari versi lama yang dulu juga mencakup Department/Job Title/Job Position — konsep itu sudah dipindah ke modul **Workforce Structure**, di luar cakupan PRD ini).
 
 ---
 
@@ -30,12 +30,13 @@ Masalah yang diselesaikan:
 **In-Scope (Dikerjakan):**
 - Pendaftaran dan pengelolaan **Company** (PT/badan hukum): kode internal, nama badan hukum, NPWP, nomor registrasi BPJS, status aktif.
 - Pendaftaran dan pengelolaan **Branch** (cabang/lokasi): kode cabang, nama, kota, penanda kantor pusat (*main branch*), status aktif — setiap Branch wajib menempel ke satu Company.
+- Konfigurasi **titik koordinat & radius geofence** per Branch (lintang/bujur pusat cabang + radius toleransi dalam meter) — data lokasi yang jadi rujukan validasi absensi (dikonsumsi modul Attendance rencana mendatang, lihat §6 & Global PRD `product-vision.md` §5.3).
 - Penetapan satu Branch sebagai kantor pusat (*head office*) per Company.
 - Pencarian gabungan: menemukan Company berdasarkan nama badan hukumnya sendiri, **atau** berdasarkan nama salah satu cabangnya.
 - Penyediaan dua dimensi (`Company`, `Branch`) sebagai fondasi pemilahan data untuk seluruh modul operasional lain (Workforce Structure, Employee, Employment Status, dst).
 
 **Out-of-Scope (TIDAK di modul ini):**
-- **Department, Job Title, Job Position** — sudah dipindah ke modul **Workforce Structure**, bukan bagian modul ini lagi sejak versi 2.0.0.
+- **Department, Job Title, Job Position** — sudah dipindah ke modul **Workforce Structure**, bukan bagian modul ini lagi.
 - **Penegakan hak akses (RBAC) berbasis Company/Branch** — modul ini hanya menyediakan *dimensi* datanya (kolom identitas PT/cabang); penegakan siapa-boleh-lihat-apa adalah tanggung jawab modul **RBAC** (rencana mendatang).
 - **Perhitungan pajak/BPJS/payroll per-PT** — tanggung jawab modul Payroll (rencana mendatang).
 - **Pengaturan shift/jam kerja/kalender libur per-cabang** — tanggung jawab modul Attendance/Leave (rencana mendatang).
@@ -96,6 +97,12 @@ Masalah yang diselesaikan:
 - **When** ada modul lain (Payroll, Attendance, dst.) yang masih merujuk riwayat data lama milik Company/Branch tersebut.
 - **Then** riwayat tersebut tetap utuh dan bisa diakses — penghapusan bersifat "nonaktif" (dapat dipulihkan/ditelusuri), bukan penghapusan permanen yang menghilangkan jejak data.
 
+**Skenario 8: Admin Mengatur Titik Koordinat & Radius Geofence Branch**
+- **Given** Admin sedang mengelola data sebuah Branch.
+- **When** Admin mengisi/mengubah titik koordinat (lintang/bujur) beserta radius toleransi Branch tersebut.
+- **Then** sistem menyimpan nilai tersebut sebagai acuan geofence Branch — belum ada validasi absensi yang memakainya di modul ini (validasi baru berlaku saat modul Attendance mengonsumsinya), Organization hanya bertanggung jawab menyimpan datanya.
+- **Catatan:** Titik koordinat & radius bersifat **opsional** di level Organization (Branch tetap valid tanpa diisi) — kewajiban pengisian sebelum Attendance aktif menjadi aturan modul Attendance, bukan modul ini.
+
 ---
 
 ## 5. Technical & Architectural Constraints
@@ -113,15 +120,19 @@ Masalah yang diselesaikan:
 ## 6. Dependencies (Ketergantungan)
 
 **Depends on:**
-- Tidak ada. Company & Branch adalah akar hierarki data — modul paling dasar dalam struktur multi-PT/multi-cabang.
+- **Auth @1.0.1** — seluruh endpoint HTTP modul ini (Company, Branch) dilindungi middleware `AuthProtected` (PRD Auth §6 "Consumed by" — "Semua Modul Terproteksi"). Company & Branch tetap akar hierarki *data bisnis* (tidak butuh entity lain untuk terbentuk), tapi tidak lepas dari lapisan proteksi akses.
+- **Bank (rencana mendatang)** — pencatatan rekening perusahaan (opsional) akan mereferensikan entitas Bank; belum ada kolom terkait di skema saat ini (lihat §7.1), menyusul setelah modul Bank diimplementasi.
+- **Region (rencana mendatang)** — kolom `city` pada Branch saat ini masih teks bebas (lihat §7.2); akan diarahkan menjadi referensi ke modul Region setelah modul tersebut diimplementasi.
 
 **Consumed by:**
-- **Workforce Structure @1.0.0** — Department dan struktur jabatan mengonsumsi `company_id` untuk cakupan datanya.
+- **Workforce Structure @1.0.1** — Department dan struktur jabatan mengonsumsi `company_id` untuk cakupan datanya.
 - **Employee @1.0.0** — data karyawan wajib terikat ke satu Company dan satu Branch (home branch).
-- **Employment Status @1.0.0** — status kepegawaian dikelola per Company, mengonsumsi `company_id` dari modul ini (lihat PRD Employment Status §5).
-- **RBAC (rencana mendatang)** — penegakan hak akses akan memakai dua dimensi `company_id`/`branch_id` yang disediakan modul ini.
+- **Employment Status @1.0.1** — status kepegawaian dikelola per Company, mengonsumsi `company_id` dari modul ini (lihat PRD Employment Status §5).
+- **RBAC @1.0.1** — penegakan hak akses memakai dua dimensi `company_id`/`branch_id` yang disediakan modul ini (lihat [rbac.md](rbac.md) §6); penegakan penuhnya sendiri masih menunggu implementasi RBAC (lihat Ringkasan Gap).
+- **Leave Type @1.0.1** — jenis cuti dikelola per Company, mengonsumsi `company_id` dari modul ini (lihat [leave-type.md](leave-type.md) §5).
+- **Work Shift @1.0.1** — shift kerja dikelola per Company + Branch, mengonsumsi `company_id` dan `branch_id` dari modul ini (lihat [work-shift.md](work-shift.md) §5).
 - **Payroll (rencana mendatang)** — perhitungan pajak/BPJS dikelompokkan per Company.
-- **Attendance/Leave (rencana mendatang)** — pengaturan jam kerja/kalender libur dikelompokkan per Branch.
+- **Attendance/Leave (rencana mendatang)** — pengaturan jam kerja/kalender libur dikelompokkan per Branch. Attendance juga akan membaca `latitude`/`longitude`/`geofence_radius_meters` Branch (lihat §7.2) untuk validasi lokasi absensi (fingerprint HP & Face Recognition), sesuai arah produk di `product-vision.md` §5.3.
 
 **External integrations:** Tidak ada.
 
@@ -138,13 +149,13 @@ Masalah yang diselesaikan:
 | `co-2` | PTB | PT Beta Sejahtera | `null` | `null` | `true` |
 
 ### 7.2. Branch — Cabang/Lokasi — 1:N dari Company
-- **Aturan Bisnis:** `company_id` wajib merujuk Company yang valid dan aktif. `code` wajib unik **dalam satu Company** (boleh sama di Company berbeda) *(Pesan error: "Kode cabang sudah digunakan di perusahaan ini")*. `is_main=true` menandai kantor pusat — tepat satu per Company, penetapan Branch baru sebagai kantor pusat otomatis mencabut status dari Branch lama (Skenario 4).
+- **Aturan Bisnis:** `company_id` wajib merujuk Company yang valid dan aktif. `code` wajib unik **dalam satu Company** (boleh sama di Company berbeda) *(Pesan error: "Kode cabang sudah digunakan di perusahaan ini")*. `is_main=true` menandai kantor pusat — tepat satu per Company, penetapan Branch baru sebagai kantor pusat otomatis mencabut status dari Branch lama (Skenario 4). `latitude`/`longitude`/`geofence_radius_meters` opsional (lihat Skenario 8) — titik pusat & radius toleransi (dalam meter) yang jadi acuan validasi lokasi absensi saat modul Attendance dibangun.
 
-| id | company_id | code | name | city | is_main | is_active |
-| :-- | :-- | :-- | :-- | :-- | :-- | :-- |
-| `br-1` | `co-1` | JKT | Kantor Pusat Jakarta | Jakarta | `true` | `true` |
-| `br-2` | `co-1` | SBY | Cabang Surabaya | Surabaya | `false` | `true` |
-| `br-3` | `co-2` | BDG | Kantor Pusat Bandung | Bandung | `true` | `true` |
+| id | company_id | code | name | city | latitude | longitude | geofence_radius_meters | is_main | is_active |
+| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
+| `br-1` | `co-1` | JKT | Kantor Pusat Jakarta | Jakarta | `-6.200000` | `106.816666` | `100` | `true` | `true` |
+| `br-2` | `co-1` | SBY | Cabang Surabaya | Surabaya | `null` | `null` | `null` | `false` | `true` |
+| `br-3` | `co-2` | BDG | Kantor Pusat Bandung | Bandung | `-6.914744` | `107.609810` | `150` | `true` | `true` |
 
 ---
 
@@ -154,3 +165,4 @@ Masalah yang diselesaikan:
 |------|----------------------|-----|
 | Hapus Company beserta Branch anak | Menghapus Company tidak memvalidasi/menghentikan proses meski masih ada Branch aktif di bawahnya (Skenario 5). | Belum ada keputusan bisnis final — didokumentasikan sebagai batasan yang disengaja, direvisit bila kebutuhan bisnis muncul. |
 | Penegakan akses (RBAC) | Filter `company_id`/`branch_id` di query baca sudah disiapkan strukturnya, tapi berjalan tanpa pembatasan tambahan (mode Owner) karena modul RBAC belum ada. | Menunggu PRD & implementasi modul RBAC (rencana mendatang). |
+| Kolom geofence Branch (`latitude`/`longitude`/`geofence_radius_meters`) | **Belum ada** di skema `internal/organization/` — kolom baru hasil penambahan scope (Skenario 8). | Perlu migration SQL + DBML baru di `hris-backend` sebelum bisa dipakai; belum ada validasi absensi yang memakainya karena modul Attendance sendiri belum ada. |

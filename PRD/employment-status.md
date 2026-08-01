@@ -1,10 +1,10 @@
 ---
 module: Employment Status
-version: 1.0.0
+version: 1.0.1
 status: Draft
 owner: bagusyanuar
-updated: 2026-08-01 15:00:00
-depends_on: [organization@1.0.0]
+updated: 2026-08-01 23:00:00
+depends_on: [organization@1.0.1, rbac@1.0.1]
 consumed_by: [employee@1.0.0, leave@planned, payroll@planned]
 ---
 
@@ -101,7 +101,8 @@ Modul Employment Status memindahkan daftar ini menjadi data yang dikelola sendir
 ## 6. Dependencies (Ketergantungan)
 
 **Depends on:**
-- **Organization @1.0.0** — sumber `company_id` (Company) untuk scope kepemilikan data. Fisik *foreign key* ke tabel `companies` mengikuti jadwal staged yang sama dengan modul Employee (`scoping-convention.md` §4) — kolom & aturan scope dipaku sekarang, penegakan penuh menyusul saat modul Organization selesai dibangun.
+- **Organization @1.0.1** — sumber `company_id` (Company) untuk scope kepemilikan data. Fisik *foreign key* ke tabel `companies` mengikuti jadwal staged yang sama dengan modul Employee (`scoping-convention.md` §4) — kolom & aturan scope dipaku sekarang, penegakan penuh menyusul saat modul Organization selesai dibangun.
+- **RBAC @1.0.1** — filter `company_id` di §5 ("Filter scope dienforce lewat `scope.FromContext`") disediakan oleh modul ini (lihat [rbac.md](rbac.md) §5); sampai RBAC diimplementasikan, penegakan berjalan default kosong (mode Owner).
 
 **Consumed by:**
 - **Employee @1.0.0** — field `employment_type` pada Employee (PRD Employee §5) berubah dari daftar tetap menjadi referensi ke modul ini (`employment_status_id`). Employee juga mengonsumsi flag `requires_contract_period` dan `requires_probation_end_date` untuk validasi pengisian data karyawan.

@@ -3,9 +3,9 @@ module: Region
 version: 1.0.0
 status: Draft
 owner: bagusyanuar
-updated: 2026-08-01 16:00:00
+updated: 2026-08-01 19:15:00
 depends_on: []
-consumed_by: [employee@1.0.0, organization@1.0.0]
+consumed_by: [employee@1.0.0, organization@planned]
 ---
 
 # Product Requirements: Region Module (Master Data Wilayah)
@@ -81,7 +81,7 @@ Data alamat (provinsi, kota/kabupaten, kecamatan, kelurahan/desa) dibutuhkan di 
 
 **Consumed by:**
 - **Employee @1.0.0** — data alamat domisili/KTP karyawan mereferensikan wilayah dari modul ini.
-- **Organization @1.0.0** — lokasi cabang (Branch) mereferensikan wilayah dari modul ini.
+- **Organization (rencana mendatang)** — lokasi cabang (Branch) akan mereferensikan wilayah dari modul ini; kolom `city` pada Branch saat ini masih teks bebas (PRD Organization §7.2).
 
 **External integrations:** Tidak ada koneksi langsung — data bersumber dari BPS/Kemendagri namun dimasukkan lewat *Database Seeder* saat *deployment*, bukan pemanggilan API pihak ketiga secara *real-time*.
 

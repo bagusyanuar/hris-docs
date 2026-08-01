@@ -3,9 +3,9 @@ module: Bank
 version: 1.0.0
 status: Draft
 owner: bagusyanuar
-updated: 2026-08-01 16:00:00
+updated: 2026-08-01 19:15:00
 depends_on: []
-consumed_by: [employee@1.0.0, organization@1.0.0, payroll@planned]
+consumed_by: [employee@1.0.0, organization@planned, payroll@planned]
 ---
 
 # Product Requirements: Bank Module
@@ -81,7 +81,7 @@ Setiap kali karyawan atau perusahaan perlu mendaftarkan rekening bank (misalnya 
 
 **Consumed by:**
 - **Employee @1.0.0** — pendaftaran rekening gaji karyawan mereferensikan entitas Bank ini.
-- **Organization @1.0.0** — pencatatan rekening perusahaan (jika ada) mereferensikan entitas Bank yang sama.
+- **Organization (rencana mendatang)** — pencatatan rekening perusahaan (jika ada) akan mereferensikan entitas Bank yang sama; belum ada kolom terkait di skema Organization saat ini (PRD Organization §7.1).
 - **Payroll (rencana mendatang)** — proses pencairan gaji akan membaca identitas bank tujuan transfer dari modul ini.
 
 **External integrations:** Tidak ada saat ini. Kolom `swift_code` disiapkan sebagai bekal integrasi *Payment Gateway*/*Disbursement* di masa depan, belum ada koneksi aktif ke pihak ketiga manapun.

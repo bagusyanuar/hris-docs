@@ -3,7 +3,7 @@ doc_type: Product Vision (Global PRD / North Star)
 version: 1.0.0
 status: Draft
 owner: bagusyanuar
-updated: 2026-08-01 18:00:00
+updated: 2026-08-01 22:30:00
 scope: platform-wide          # bukan PRD per-bounded-context; ini payung semua modul (Docs, Backend, Frontend)
 ---
 
@@ -88,21 +88,25 @@ Group / Holding (implisit = 1 instalasi aplikasi, 1 owner)
 | Modul | Peran | Status kode | PRD di `hris-docs` |
 |-------|-------|-------------|---------------------|
 | **Auth** | autentikasi & access control dasar | ada | [auth.md](auth.md) |
-| **User** | akun pengguna sistem | ada | belum dimigrasi |
+| **User** | akun pengguna sistem | ada (sebagian — belum ada `application`/`transport`) | [user.md](user.md) |
 | **Organization** | legal & lokasi: Company (PT), Branch | ada | [organization.md](organization.md) |
-| **Workforce Structure** | struktur internal: Department, Job Title, Job Position | ada | belum dimigrasi (`hris-backend/docs/PRD/workforce-structure.md`) |
+| **Workforce Structure** | struktur internal: Department, Job Title, Job Position | ada | [workforce-structure.md](workforce-structure.md) |
 | **Employee** | data & profil karyawan, sudah punya `company_id`/`branch_id` | ada | belum dimigrasi (`hris-backend/docs/PRD/employee.md`) |
 | **Employment Status** | status kepegawaian sebagai master data per-PT | **Draft, belum ada kode** | [employment-status.md](employment-status.md) |
 
 ### 5.2. Concern Lintas-Modul (jadi modul/PRD sendiri)
 | Modul | Peran | Kenapa dipisah |
 |-------|-------|-----------------|
-| **RBAC** | enforce scoping `company_id`/`branch_id` + role/permission | dikonsumsi SEMUA modul; fondasi access-control |
+| **[RBAC](rbac.md)** | enforce scoping `company_id`/`branch_id` + role/permission | dikonsumsi SEMUA modul; fondasi access-control |
 | **Audit Trail** (rencana mendatang) | jejak siapa-ubah-apa-kapan lintas modul | requirement enterprise |
 | **Notification** (rencana mendatang) | email/push lintas modul | dikonsumsi banyak modul |
 
 ### 5.3. Modul HRIS Inti (arah pengembangan, belum PRD)
 Attendance & Time Tracking · Leave/Time-off · **Payroll & Compensation** · Performance Management · Recruitment & Onboarding.
+
+**Catatan arah Attendance & Time Tracking** (detail lengkap menyusul di PRD `attendance.md`, ini baru garis besar arah produk):
+- **Metode absensi:** wajib mendukung **fingerprint via HP** (sensor biometrik bawaan perangkat karyawan, bukan mesin fingerprint fisik terpisah) dan **Face Recognition** sebagai metode verifikasi identitas saat clock-in/clock-out.
+- **Validasi lokasi (geofencing):** absensi hanya sah bila posisi karyawan berada di dalam radius yang ditentukan per `Branch` (lihat §3 Hierarki — dimensi `branch_id`, sejalan dengan absensi yang sudah di-scope per cabang). Tiap cabang punya titik koordinat pusat + radius toleransi sendiri; di luar radius tersebut, sistem menolak absensi. Kolom `latitude`/`longitude`/`geofence_radius_meters` sudah ditambahkan di skema Branch — lihat [organization.md](organization.md) §7.2 Skenario 8.
 
 > Semua modul di §5.3 WAJIB lewat proses PRD/Tech-Spec penuh (Docs & Design First atau Prototyping-Driven, §4.1 poin 5) sebelum diimplementasi. Payroll & Attendance = tier **Kompleks** (kalkulasi berlapis/state machine).
 

@@ -1,11 +1,11 @@
 ---
 module: Auth
-version: 1.0.0
+version: 1.0.1
 status: Draft
 owner: bagusyanuar
-updated: 2026-07-26 13:17:00
-depends_on: [user@1.0.0]
-consumed_by: [employee@1.0.0, organization@1.0.0]
+updated: 2026-08-01 23:00:00
+depends_on: [user@1.0.1]
+consumed_by: [employee@1.0.0, organization@1.0.1, rbac@1.0.1]
 ---
 
 # Product Requirements: Auth Module
@@ -95,11 +95,12 @@ Modul Auth **tidak** mendefinisikan role bisnis sendiri — ia hanya bertindak s
 ## 6. Dependencies (Ketergantungan)
 
 **Depends on:**
-- **[User @1.0.0]** — Modul Auth mengonsumsi `user.Repository` (terutama `FindByEmail` dan `FindByID`) untuk memverifikasi `id`, `password` (hash), dan `status` dari tabel `users`.
+- **[User @1.0.1]** — Modul Auth mengonsumsi `user.Repository` (terutama `FindByEmail` dan `FindByID`) untuk memverifikasi `id`, `password` (hash), dan `status` dari tabel `users`.
 
 **Consumed by:**
 - **[Employee @1.0.0]** — Mengandalkan mekanisme blokir login Auth saat proses *offboarding* (Kriteria Penerimaan Skenario 3).
 - **[Semua Modul Terproteksi]** — Organisasi, Employee, dan semua API masa depan bergantung mutlak pada *middleware* `AuthProtected`.
+- **[RBAC @1.0.1]** — RBAC berjalan setelah identitas user diverifikasi Auth, mengasumsikan `user_id` yang sudah tervalidasi dari lapisan ini (lihat [rbac.md](rbac.md) §6).
 
 ---
 
